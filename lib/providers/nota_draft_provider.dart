@@ -17,7 +17,7 @@ class NotaDraftState {
   NotaDraftState({required this.items, required this.customerName});
 
   double get total =>
-      items.fold(0.0, (sum, item) => sum + item.effectiveTotal);
+      items.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal);
 
   List<NotaItem> get validItems =>
       items.where((i) => i.name.trim().isNotEmpty && (i.price > 0 || i.qty > 0)).toList();
@@ -84,7 +84,7 @@ class NotaDraftNotifier extends Notifier<NotaDraftState> {
       customerName: state.customerName.trim().isEmpty ? null : state.customerName.trim(),
       date: now,
       items: validItems,
-      total: validItems.fold(0.0, (sum, item) => sum + item.effectiveTotal),
+      total: validItems.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal),
       bayarTunai: (bayarTunai != null && bayarTunai > 0) ? bayarTunai : null,
       updatedAt: now,
     );

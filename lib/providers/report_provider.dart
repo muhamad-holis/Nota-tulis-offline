@@ -43,7 +43,7 @@ final reportProvider = FutureProvider.family<ReportData, ReportPeriod>((ref, per
   final start = _startTimestamp(period);
   final notas = await DatabaseHelper.instance.getNotasFrom(start);
 
-  final omzet = notas.fold(0.0, (sum, n) => sum + n.total);
+  final omzet = notas.fold<double>(0.0, (sum, n) => sum + n.total);
   final jumlahNota = notas.length;
   final rataRataPerNota = jumlahNota > 0 ? omzet / jumlahNota : 0.0;
 

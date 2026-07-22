@@ -45,7 +45,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
     }
     try {
       final base64Logo = cropImageToSquareBase64(bytes);
-      await ref.read(settingsProvider.notifier).update({'logo': base64Logo});
+      await ref.read(settingsProvider.notifier).patchSettings({'logo': base64Logo});
     } catch (err) {
       showToast('Gagal mengupload logo: $err', ToastType.error);
     }
@@ -185,7 +185,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                             ),
                             Switch(
                               value: settings.showLogo,
-                              onChanged: (v) => ref.read(settingsProvider.notifier).update({'showLogo': v ? 1 : 0}),
+                              onChanged: (v) => ref.read(settingsProvider.notifier).patchSettings({'showLogo': v ? 1 : 0}),
                               activeColor: AppColors.brand600,
                             ),
                           ],
@@ -193,11 +193,11 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                       ),
                     ],
                     const SizedBox(height: 14),
-                    _labeledField('Nama Toko', settings.storeName, (v) => ref.read(settingsProvider.notifier).update({'storeName': v})),
+                    _labeledField('Nama Toko', settings.storeName, (v) => ref.read(settingsProvider.notifier).patchSettings({'storeName': v})),
                     const SizedBox(height: 10),
-                    _labeledField('Alamat', settings.address, (v) => ref.read(settingsProvider.notifier).update({'address': v})),
+                    _labeledField('Alamat', settings.address, (v) => ref.read(settingsProvider.notifier).patchSettings({'address': v})),
                     const SizedBox(height: 10),
-                    _labeledField('Nomor HP', settings.phone, (v) => ref.read(settingsProvider.notifier).update({'phone': v})),
+                    _labeledField('Nomor HP', settings.phone, (v) => ref.read(settingsProvider.notifier).patchSettings({'phone': v})),
                   ],
                 ),
               ),
@@ -208,7 +208,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                 child: _labeledField(
                   null,
                   settings.headerText,
-                  (v) => ref.read(settingsProvider.notifier).update({'headerText': v}),
+                  (v) => ref.read(settingsProvider.notifier).patchSettings({'headerText': v}),
                   multiline: true,
                   hint: 'TERIMA KASIH\nSELAMAT DATANG',
                 ),
@@ -220,7 +220,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                 child: _labeledField(
                   null,
                   settings.footerText,
-                  (v) => ref.read(settingsProvider.notifier).update({'footerText': v}),
+                  (v) => ref.read(settingsProvider.notifier).patchSettings({'footerText': v}),
                   multiline: true,
                   hint: 'Terima kasih atas kepercayaan Anda.',
                 ),
@@ -236,7 +236,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                         child: Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: OutlinedButton(
-                            onPressed: () => ref.read(settingsProvider.notifier).update({'paperSize': size}),
+                            onPressed: () => ref.read(settingsProvider.notifier).patchSettings({'paperSize': size}),
                             style: OutlinedButton.styleFrom(
                               backgroundColor: settings.paperSize == size ? AppColors.brand50 : null,
                               foregroundColor: settings.paperSize == size ? AppColors.brand700 : AppColors.slate600,
@@ -449,7 +449,7 @@ class _PrinterScanSheetState extends ConsumerState<_PrinterScanSheet> {
   Future<void> _connect(BluetoothDevice device) async {
     final info = await ref.read(printerProvider.notifier).connectTo(device);
     if (info != null) {
-      await ref.read(settingsProvider.notifier).update({'printerId': info['id'], 'printerName': info['name']});
+      await ref.read(settingsProvider.notifier).patchSettings({'printerId': info['id'], 'printerName': info['name']});
       showToast('Terhubung ke ${info['name']}', ToastType.success);
       if (mounted) Navigator.of(context).pop();
     } else {

@@ -49,12 +49,12 @@ final historyProvider = FutureProvider<List<Nota>>((ref) async {
   );
 });
 
-Future<void> deleteNotaAndRefresh(Ref ref, int id) async {
+Future<void> deleteNotaAndRefresh(WidgetRef ref, int id) async {
   await DatabaseHelper.instance.deleteNota(id);
   ref.read(historyRefreshProvider.notifier).state++;
 }
 
-Future<void> clearAllNotasAndRefresh(Ref ref) async {
+Future<void> clearAllNotasAndRefresh(WidgetRef ref) async {
   await DatabaseHelper.instance.clearAllNotas();
   ref.read(historyRefreshProvider.notifier).state++;
 }

@@ -14,7 +14,7 @@ class EditNotaState {
 
   EditNotaState({required this.original, required this.items, required this.customerName});
 
-  double get total => items.fold(0.0, (sum, item) => sum + item.effectiveTotal);
+  double get total => items.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal);
 
   List<NotaItem> get validItems =>
       items.where((i) => i.name.trim().isNotEmpty && (i.price > 0 || i.qty > 0)).toList();
@@ -85,7 +85,7 @@ class EditNotaNotifier extends Notifier<EditNotaState> {
     final updated = original!.copyWith(
       customerName: state.customerName.trim().isEmpty ? null : state.customerName.trim(),
       items: validItems,
-      total: validItems.fold(0.0, (sum, item) => sum + item.effectiveTotal),
+      total: validItems.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal),
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
     await DatabaseHelper.instance.updateNota(original.id!, updated);

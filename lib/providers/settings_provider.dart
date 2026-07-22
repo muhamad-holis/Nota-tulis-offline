@@ -8,7 +8,7 @@ class SettingsNotifier extends AsyncNotifier<Settings> {
     return DatabaseHelper.instance.ensureSettingsExist();
   }
 
-  Future<void> update(Map<String, dynamic> patch) async {
+  Future<void> patchSettings(Map<String, dynamic> patch) async {
     final current = state.value;
     if (current?.id == null) return;
     await DatabaseHelper.instance.updateSettings(current!.id!, patch);
