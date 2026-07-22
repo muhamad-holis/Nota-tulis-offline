@@ -11,7 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Tambahkan environment Java 17 (Syarat stabil untuk Android SDK 36 & Gradle baru)
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -30,17 +29,12 @@ jobs:
           yes | "$SDK_MGR" --licenses > /dev/null || true
           "$SDK_MGR" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Generate folder platform Android murni Kotlin
-        run: |
-          # Hapus folder android bawaan jika ada untuk mencegah sisa konfigurasi Java yang bentrok
-          rm -rf android
-          # Generate ulang menggunakan Kotlin (standar baru Flutter), tanpa parameter nama yang bentrok
-          flutter create --platforms=android -a kotlin --org com.notatulis .
-
       - name: Tambahkan izin Bluetooth (BLE) ke AndroidManifest.xml
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
-          sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
+          if [ -f "$MANIFEST" ]; then
+            sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
+          fi
 
       - name: Pastikan minSdk 21 & compileSdk/targetSdk 36
         run: |
@@ -50,16 +44,23 @@ jobs:
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' "$GRADLE_KTS" || true
             sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' "$GRADLE_KTS" || true
             sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 36/' "$GRADLE_KTS" || true
-            grep -E "minSdk|compileSdk|targetSdk" "$GRADLE_KTS"
           elif [ -f "$GRADLE_GROOVY" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' "$GRADLE_GROOVY" || true
             sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/' "$GRADLE_GROOVY" || true
             sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/' "$GRADLE_GROOVY" || true
-            grep -E "minSdkVersion|compileSdkVersion|targetSdkVersion" "$GRADLE_GROOVY"
           fi
 
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Patch Plugins KGP (Fix Built-in Kotlin Conflict)
+        run: |
+          PUB_CACHE="$HOME/.pub-cache/hosted/pub.dev"
+          if [ -d "$PUB_CACHE" ]; then
+            echo "Menghapus deklarasi KGP usang pada plugin agar kompatibel dengan Built-in Kotlin Flutter..."
+            find "$PUB_CACHE" -name "build.gradle" -type f -exec sed -i '/apply plugin: .kotlin-android./d' {} +
+            find "$PUB_CACHE" -name "build.gradle" -type f -exec sed -i '/id .org.jetbrains.kotlin.android./d' {} +
+          fi
 
       - name: Build APK debug
         run: flutter build apk --debug
