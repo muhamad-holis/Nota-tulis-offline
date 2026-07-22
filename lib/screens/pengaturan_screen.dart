@@ -36,7 +36,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
   }
 
   Future<void> _pickAndSetLogo() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
     if (result == null) return;
     final bytes = result.files.single.bytes;
     if (bytes == null) {

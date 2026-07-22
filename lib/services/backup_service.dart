@@ -33,7 +33,7 @@ class BackupService {
 
   /// Buka file picker, lalu timpa seluruh data lokal dengan isi file backup.
   static Future<void> importBackupFromPicker() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
