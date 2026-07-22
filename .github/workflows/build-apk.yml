@@ -47,6 +47,12 @@ jobs:
             grep -E "minSdkVersion|compileSdkVersion|targetSdkVersion" "$GRADLE_GROOVY"
           fi
 
+      - name: Pin Gradle wrapper ke 8.13 (fix file_picker Kotlin plugin)
+        run: |
+          WRAPPER=android/gradle/wrapper/gradle-wrapper.properties
+          sed -i 's#^distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.13-all.zip#' "$WRAPPER"
+          cat "$WRAPPER"
+
       - name: flutter pub get
         run: flutter pub get
 
