@@ -56,6 +56,19 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      - name: Patch file_picker (fix missing kotlin-android plugin bug)
+        run: |
+          FP_DIR=$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -iname "file_picker-*" -type d | sort -V | tail -1)
+          if [ -n "$FP_DIR" ]; then
+            GRADLE_FILE="$FP_DIR/android/build.gradle"
+            if [ -f "$GRADLE_FILE" ] && ! grep -q "kotlin-android\|org.jetbrains.kotlin.android" "$GRADLE_FILE"; then
+              echo "Patching $GRADLE_FILE (missing kotlin-android plugin)"
+              sed -i "s/apply plugin: 'com.android.library'/apply plugin: 'com.android.library'\napply plugin: 'org.jetbrains.kotlin.android'/" "$GRADLE_FILE"
+            else
+              echo "file_picker build.gradle already OK, skip patch"
+            fi
+          fi
+
       - name: Build APK debug
         run: flutter build apk --debug
 
