@@ -1,0 +1,51 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: stable
+
+      # android/ sengaja TIDAK disimpan di repo — dibuat ulang setiap build.
+      # Aman: karena pubspec.yaml sudah punya dependency `flutter`, perintah ini
+      # hanya menambahkan folder platform yang belum ada, TIDAK menimpa lib/ & pubspec.yaml.
+      - name: Generate folder platform Android
+        run: flutter create --platforms=android --org com.notatulis --project-name app .
+
+      - name: Tambahkan izin Bluetooth (BLE) ke AndroidManifest.xml
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
+          cat "$MANIFEST"
+
+      - name: Pastikan minSdkVersion 21 (dibutuhkan Bluetooth Low Energy)
+        run: |
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' android/app/build.gradle.kts || true
+            cat android/app/build.gradle.kts | grep minSdk
+          elif [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' android/app/build.gradle || true
+            cat android/app/build.gradle | grep minSdkVersion
+          fi
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: Build APK release
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nota-tulis-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
