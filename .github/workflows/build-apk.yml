@@ -47,14 +47,22 @@ jobs:
             grep -E "minSdkVersion|compileSdkVersion|targetSdkVersion" "$GRADLE_GROOVY"
           fi
 
-      - name: Pin Gradle wrapper ke 8.13 (fix file_picker Kotlin plugin)
-        run: |
-          WRAPPER=android/gradle/wrapper/gradle-wrapper.properties
-          sed -i 's#^distributionUrl=.*#distributionUrl=https\\://services.gradle.org/distributions/gradle-8.13-all.zip#' "$WRAPPER"
-          cat "$WRAPPER"
-
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Patch file_picker build.gradle (tambah plugin kotlin-android)
+        run: |
+          FP_DIR=$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -iname "file_picker-*" -type d | head -1)
+          FP_GRADLE="$FP_DIR/android/build.gradle"
+          echo "Target: $FP_GRADLE"
+          if [ -f "$FP_GRADLE" ] && ! grep -qE "kotlin-android|org.jetbrains.kotlin.android" "$FP_GRADLE"; then
+            sed -i "/apply plugin: 'com.android.library'/a apply plugin: 'org.jetbrains.kotlin.android'" "$FP_GRADLE"
+            echo "Berhasil dipatch."
+          else
+            echo "Sudah ada / file tidak ditemukan, skip."
+          fi
+          cat "$FP_GRADLE"
+
 
       - name: Build APK debug
         run: flutter build apk --debug
