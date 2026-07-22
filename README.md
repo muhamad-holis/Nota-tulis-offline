@@ -81,6 +81,51 @@ Ditambahkan otomatis oleh CI, tepat sebelum tag `<application ...>`:
 printer tidak ditemukan saat scan di sebagian HP Android lama — beberapa
 printer BLE murah butuh izin lokasi klasik untuk discoverable.
 
+## Keystore signing (opsional — tidak dipakai secara default)
+
+Workflow `build-apk.yml` saat ini build **debug APK** (`flutter build apk
+--debug`), otomatis ditandatangani pakai debug key bawaan Flutter — tidak
+butuh keystore atau secrets apapun. Cukup untuk sideload/pakai sendiri.
+
+Kalau nanti berubah pikiran dan mau build **release** (APK lebih kecil &
+teroptimasi, dan supaya update antar versi bisa saling menimpa dengan rapi
+tanpa uninstall dulu), generate keystore lalu daftarkan sebagai secrets:
+
+Karena ini proyek baru yang terpisah dari versi TWA/Vercel lama, generate
+keystore baru (sekali saja) di Termux:
+
+```bash
+keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 \
+  -validity 10000 -alias nota-tulis
+```
+
+Nanti akan diminta bikin password keystore & isi data (nama, organisasi,
+dst — boleh asal, tidak memengaruhi fungsi app). **Simpan file
+`upload-keystore.jks` ini baik-baik di luar repo** (jangan sampai hilang,
+kalau hilang update selanjutnya bakal bermasalah lagi).
+
+Lalu encode ke base64 dan daftarkan sebagai **GitHub Secrets** di
+`https://github.com/muhamad-holis/Nota-tulis-offline/settings/secrets/actions`:
+
+```bash
+base64 -w 0 upload-keystore.jks
+# copy hasilnya (satu baris panjang) buat secret ANDROID_KEYSTORE_BASE64
+```
+
+Tambahkan 4 secrets ini (New repository secret):
+
+| Nama secret | Isi |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | hasil `base64` di atas |
+| `ANDROID_KEYSTORE_PASSWORD` | password yang kamu buat saat `keytool -genkey` |
+| `ANDROID_KEY_ALIAS` | `nota-tulis` |
+| `ANDROID_KEY_PASSWORD` | password key (kalau tidak diminta terpisah, sama dengan storePassword) |
+
+**Catatan:** langkah-langkah signing di atas belum otomatis di
+`build-apk.yml` (workflow sekarang murni build debug). Kalau sudah siap
+pakai release + keystore, bilang saja — saya tambahkan lagi step
+signing-nya ke workflow.
+
 ## Nama aplikasi & warna tema
 
 - `applicationId` hasil build: **`com.notatulis.app`** — persis sama dengan

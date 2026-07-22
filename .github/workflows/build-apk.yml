@@ -11,10 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Tidak dikunci ke versi tertentu — ambil stable terbaru supaya template
+      # Gradle yang dihasilkan `flutter create` selalu kompatibel dengan versi
+      # plugin (flutter_blue_plus, dst) yang ditarik dari pub.dev.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
           channel: stable
+
+      - run: flutter --version
 
       # android/ sengaja TIDAK disimpan di repo — dibuat ulang setiap build.
       # Aman: karena pubspec.yaml sudah punya dependency `flutter`, perintah ini
@@ -41,11 +45,14 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
-      - name: Build APK release
-        run: flutter build apk --release
+      # Build DEBUG: otomatis ditandatangani pakai debug key bawaan Flutter,
+      # tidak butuh keystore/secrets sama sekali. Cukup untuk sideload sendiri,
+      # bukan untuk rilis ke Play Store.
+      - name: Build APK debug
+        run: flutter build apk --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nota-tulis-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: nota-tulis-apk-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
