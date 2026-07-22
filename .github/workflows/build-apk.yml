@@ -29,6 +29,9 @@ jobs:
           yes | "$SDK_MGR" --licenses > /dev/null || true
           "$SDK_MGR" "platforms;android-36" "build-tools;36.0.0"
 
+      - name: Generate folder platform Android
+        run: flutter create --platforms=android -a kotlin --org com.notatulis .
+
       - name: Tambahkan izin Bluetooth (BLE) ke AndroidManifest.xml
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
@@ -57,7 +60,6 @@ jobs:
         run: |
           PUB_CACHE="$HOME/.pub-cache/hosted/pub.dev"
           if [ -d "$PUB_CACHE" ]; then
-            echo "Menghapus deklarasi KGP usang pada plugin agar kompatibel dengan Built-in Kotlin Flutter..."
             find "$PUB_CACHE" -name "build.gradle" -type f -exec sed -i '/apply plugin: .kotlin-android./d' {} +
             find "$PUB_CACHE" -name "build.gradle" -type f -exec sed -i '/id .org.jetbrains.kotlin.android./d' {} +
           fi
