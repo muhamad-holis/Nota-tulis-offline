@@ -17,11 +17,11 @@ jobs:
 
       - run: flutter --version
 
-      - name: Install Android SDK platform 34
+      - name: Install Android SDK platform 36
         run: |
           SDK_MGR=$(find "$ANDROID_HOME" -name "sdkmanager" | head -1)
           yes | "$SDK_MGR" --licenses > /dev/null || true
-          "$SDK_MGR" "platforms;android-34" "build-tools;34.0.0"
+          "$SDK_MGR" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Generate folder platform Android
         run: flutter create --platforms=android --org com.notatulis --project-name app .
@@ -31,19 +31,19 @@ jobs:
           MANIFEST=android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
 
-      - name: Pastikan minSdk 21 & compileSdk/targetSdk 34
+      - name: Pastikan minSdk 21 & compileSdk/targetSdk 36
         run: |
           GRADLE_KTS=android/app/build.gradle.kts
           GRADLE_GROOVY=android/app/build.gradle
           if [ -f "$GRADLE_KTS" ]; then
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' "$GRADLE_KTS" || true
-            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/' "$GRADLE_KTS" || true
-            sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/' "$GRADLE_KTS" || true
+            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' "$GRADLE_KTS" || true
+            sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 36/' "$GRADLE_KTS" || true
             grep -E "minSdk|compileSdk|targetSdk" "$GRADLE_KTS"
           elif [ -f "$GRADLE_GROOVY" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' "$GRADLE_GROOVY" || true
-            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/' "$GRADLE_GROOVY" || true
-            sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/' "$GRADLE_GROOVY" || true
+            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/' "$GRADLE_GROOVY" || true
+            sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/' "$GRADLE_GROOVY" || true
             grep -E "minSdkVersion|compileSdkVersion|targetSdkVersion" "$GRADLE_GROOVY"
           fi
 
