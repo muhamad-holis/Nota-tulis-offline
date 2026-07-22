@@ -17,11 +17,11 @@ jobs:
 
       - run: flutter --version
 
-      - name: Install Android SDK platform 36
+      - name: Install Android SDK platform 34
         run: |
           SDK_MGR=$(find "$ANDROID_HOME" -name "sdkmanager" | head -1)
           yes | "$SDK_MGR" --licenses > /dev/null || true
-          "$SDK_MGR" "platforms;android-36" "build-tools;36.0.0"
+          "$SDK_MGR" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Generate folder platform Android
         run: flutter create --platforms=android --org com.notatulis --project-name app .
@@ -31,38 +31,24 @@ jobs:
           MANIFEST=android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
 
-      - name: Pastikan minSdk 21 & compileSdk/targetSdk 36
+      - name: Pastikan minSdk 21 & compileSdk/targetSdk 34
         run: |
           GRADLE_KTS=android/app/build.gradle.kts
           GRADLE_GROOVY=android/app/build.gradle
           if [ -f "$GRADLE_KTS" ]; then
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' "$GRADLE_KTS" || true
-            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' "$GRADLE_KTS" || true
-            sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 36/' "$GRADLE_KTS" || true
+            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 34/' "$GRADLE_KTS" || true
+            sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 34/' "$GRADLE_KTS" || true
             grep -E "minSdk|compileSdk|targetSdk" "$GRADLE_KTS"
           elif [ -f "$GRADLE_GROOVY" ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' "$GRADLE_GROOVY" || true
-            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/' "$GRADLE_GROOVY" || true
-            sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/' "$GRADLE_GROOVY" || true
+            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 34/' "$GRADLE_GROOVY" || true
+            sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 34/' "$GRADLE_GROOVY" || true
             grep -E "minSdkVersion|compileSdkVersion|targetSdkVersion" "$GRADLE_GROOVY"
           fi
 
       - name: flutter pub get
         run: flutter pub get
-
-      - name: Patch file_picker build.gradle (tambah plugin kotlin-android)
-        run: |
-          FP_DIR=$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -iname "file_picker-*" -type d | head -1)
-          FP_GRADLE="$FP_DIR/android/build.gradle"
-          echo "Target: $FP_GRADLE"
-          if [ -f "$FP_GRADLE" ] && ! grep -qE "kotlin-android|org.jetbrains.kotlin.android" "$FP_GRADLE"; then
-            sed -i "/apply plugin: 'com.android.library'/a apply plugin: 'org.jetbrains.kotlin.android'" "$FP_GRADLE"
-            echo "Berhasil dipatch."
-          else
-            echo "Sudah ada / file tidak ditemukan, skip."
-          fi
-          cat "$FP_GRADLE"
-
 
       - name: Build APK debug
         run: flutter build apk --debug
