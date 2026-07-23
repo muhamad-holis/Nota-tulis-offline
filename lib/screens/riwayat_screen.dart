@@ -164,11 +164,25 @@ class _NotaDetailSheetState extends ConsumerState<_NotaDetailSheet> {
   bool _editMode = false;
   bool _busy = false;
   final TextEditingController _customerCtrl = TextEditingController();
+  final Map<String, FocusNode> _nameFocusNodes = {};
+
+  FocusNode _nameFocusNodeFor(String id) =>
+      _nameFocusNodes.putIfAbsent(id, () => FocusNode());
 
   @override
   void initState() {
     super.initState();
     _customerCtrl.text = widget.initialNota.customerName ?? '';
+  }
+
+  @override
+  void dispose() {
+    _customerCtrl.dispose();
+    for (final node in _nameFocusNodes.values) {
+      node.dispose();
+    }
+    _nameFocusNodes.clear();
+    super.dispose();
   }
 
   Future<void> _delete() async {
@@ -305,11 +319,24 @@ class _NotaDetailSheetState extends ConsumerState<_NotaDetailSheet> {
                         onUpdateItem: (id, {name, price, qty, totalOverride, clearOverride = false}) => ref
                             .read(editNotaProvider.notifier)
                             .updateItem(id, name: name, price: price, qty: qty, totalOverride: totalOverride, clearOverride: clearOverride),
-                        onRemoveItem: (id) => ref.read(editNotaProvider.notifier).removeItem(id),
+                        onRemoveItem: (id) {
+                          ref.read(editNotaProvider.notifier).removeItem(id);
+                          _nameFocusNodes.remove(id)?.dispose();
+                        },
                         onAddRow: () => ref.read(editNotaProvider.notifier).addRow(),
                         onEnterName: (_) {},
+                        nameFocusNode: _nameFocusNodeFor,
                         onEnterQty: (id, isLast) {
-                          if (isLast) ref.read(editNotaProvider.notifier).ensureTrailingRow();
+                          final notifier = ref.read(editNotaProvider.notifier);
+                          if (isLast) notifier.ensureTrailingRow();
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            final items = ref.read(editNotaProvider).items;
+                            final idx = items.indexWhere((it) => it.id == id);
+                            if (idx >= 0 && idx + 1 < items.length) {
+                              _nameFocusNodeFor(items[idx + 1].id).requestFocus();
+                            }
+                          });
                         },
                       ),
                       const SizedBox(height: 12),
