@@ -377,8 +377,17 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Aplikasi pencatatan nota toko retail yang ringkas, sederhana, mudah digunakan, cepat, dan efisien. Data nota tersimpan langsung di HP.',
+                      'Aplikasi pencatatan nota toko retail yang ringkas, sederhana, mudah digunakan, cepat, dan efisien. Data nota tersimpan langsung di HP masing-masing.',
                       style: TextStyle(fontSize: 11, color: AppColors.slate400),
+                    ),
+                    const SizedBox(height: 12),
+                    Divider(color: AppColors.slate200, height: 1),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        '© 2026 Dibuat oleh Muhamad Holis',
+                        style: TextStyle(fontSize: 11, color: AppColors.slate400),
+                      ),
                     ),
                   ],
                 ),
