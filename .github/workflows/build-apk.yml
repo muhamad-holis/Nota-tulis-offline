@@ -32,11 +32,12 @@ jobs:
       - name: Generate folder platform Android
         run: flutter create --platforms=android -a kotlin --org com.notatulis .
 
-      - name: Tambahkan izin Bluetooth (BLE) ke AndroidManifest.xml
+      - name: Tambahkan izin Bluetooth (BLE) ke AndroidManifest.xml & set nama app
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
           if [ -f "$MANIFEST" ]; then
             sed -i 's#<application#<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />\n\n    <application#' "$MANIFEST"
+            sed -i 's/android:label="[^"]*"/android:label="Nota Tulis"/' "$MANIFEST"
           fi
 
       - name: Pastikan minSdk 21 & compileSdk/targetSdk 36
@@ -55,6 +56,9 @@ jobs:
 
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Generate ikon aplikasi (flutter_launcher_icons)
+        run: dart run flutter_launcher_icons
 
       - name: Migrasi plugin lama ke Built-in Kotlin (file_picker, share_plus)
         run: |
