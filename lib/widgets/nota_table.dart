@@ -10,6 +10,7 @@ class NotaTable extends StatelessWidget {
   final VoidCallback onAddRow;
   final ValueChanged<String> onEnterName;
   final void Function(String id, bool isLast) onEnterQty;
+  final FocusNode Function(String id) nameFocusNode;
 
   const NotaTable({
     super.key,
@@ -19,6 +20,7 @@ class NotaTable extends StatelessWidget {
     required this.onAddRow,
     required this.onEnterName,
     required this.onEnterQty,
+    required this.nameFocusNode,
   });
 
   @override
@@ -50,6 +52,7 @@ class NotaTable extends StatelessWidget {
               key: ValueKey(items[i].id),
               item: items[i],
               autoFocus: i == 0,
+              nameFocusNode: nameFocusNode(items[i].id),
               onUpdate: ({name, price, qty, totalOverride, clearOverride = false}) => onUpdateItem(
                 items[i].id,
                 name: name,

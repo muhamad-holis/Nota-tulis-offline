@@ -22,7 +22,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'nota_tulis.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE products (
@@ -35,6 +35,7 @@ class DatabaseHelper {
             updatedAt INTEGER NOT NULL
           )
         ''');
+        await db.execute('CREATE INDEX idx_products_name ON products(name)');
         await db.execute('''
           CREATE TABLE notas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +65,11 @@ class DatabaseHelper {
             lastNotaNumber INTEGER NOT NULL DEFAULT 0
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_products_name ON products(name)');
+        }
       },
     );
   }
@@ -103,16 +109,17 @@ class DatabaseHelper {
     final db = await database;
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return [];
-    final rows = await db.query('products');
-    final all = rows.map((r) => Product.fromMap(r)).toList();
-    final filtered = all.where((p) => p.name.toLowerCase().contains(q)).toList();
-    filtered.sort((a, b) {
-      final aStarts = a.name.toLowerCase().startsWith(q) ? 0 : 1;
-      final bStarts = b.name.toLowerCase().startsWith(q) ? 0 : 1;
-      if (aStarts != bStarts) return aStarts - bStarts;
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
-    return filtered.take(limit).toList();
+    // Biarkan SQLite yang memfilter, mengurutkan, dan membatasi hasil,
+    // supaya tidak perlu memuat seluruh tabel produk ke memori setiap kali
+    // pengguna mengetik satu huruf (ini penyebab app terasa makin berat/lag
+    // seiring bertambahnya jumlah produk yang tersimpan).
+    final rows = await db.rawQuery('''
+      SELECT * FROM products
+      WHERE LOWER(name) LIKE ?
+      ORDER BY CASE WHEN LOWER(name) LIKE ? THEN 0 ELSE 1 END, LOWER(name) ASC
+      LIMIT ?
+    ''', ['%$q%', '$q%', limit]);
+    return rows.map((r) => Product.fromMap(r)).toList();
   }
 
   Future<Product?> findProductByName(String name) async {

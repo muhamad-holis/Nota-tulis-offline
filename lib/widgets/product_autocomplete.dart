@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/product.dart';
@@ -32,6 +33,7 @@ class _ProductAutocompleteState extends ConsumerState<ProductAutocomplete> {
   late final FocusNode _focusNode;
   late TextEditingController _controller;
   OverlayEntry? _overlayEntry;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -55,6 +57,18 @@ class _ProductAutocompleteState extends ConsumerState<ProductAutocomplete> {
     } else {
       _showOverlay();
     }
+  }
+
+  void _scheduleSuggestionsUpdate() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      if (_overlayEntry == null) {
+        _showOverlay();
+      } else {
+        _overlayEntry!.markNeedsBuild();
+      }
+    });
   }
 
   void _showOverlay() {
@@ -129,6 +143,7 @@ class _ProductAutocompleteState extends ConsumerState<ProductAutocomplete> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _removeOverlay();
     _focusNode.removeListener(_onFocusChange);
     if (widget.focusNode == null) _focusNode.dispose();
@@ -153,7 +168,7 @@ class _ProductAutocompleteState extends ConsumerState<ProductAutocomplete> {
         textInputAction: TextInputAction.next,
         onChanged: (v) {
           widget.onChanged(v);
-          _showOverlay();
+          _scheduleSuggestionsUpdate();
         },
         onSubmitted: (_) => widget.onEnter(),
       ),

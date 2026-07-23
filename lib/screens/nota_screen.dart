@@ -23,13 +23,21 @@ class NotaScreen extends ConsumerStatefulWidget {
 
 class _NotaScreenState extends ConsumerState<NotaScreen> {
   final TextEditingController _customerCtrl = TextEditingController();
+  final Map<String, FocusNode> _nameFocusNodes = {};
   String _receivedText = '';
   bool _saving = false;
   bool _busy = false;
 
+  FocusNode _nameFocusNodeFor(String id) =>
+      _nameFocusNodes.putIfAbsent(id, () => FocusNode());
+
   @override
   void dispose() {
     _customerCtrl.dispose();
+    for (final node in _nameFocusNodes.values) {
+      node.dispose();
+    }
+    _nameFocusNodes.clear();
     super.dispose();
   }
 
@@ -43,6 +51,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
       showToast('Nota berhasil disimpan', ToastType.success);
       ref.read(notaDraftProvider.notifier).reset();
       _customerCtrl.clear();
+      _clearNameFocusNodes();
       setState(() => _receivedText = '');
     } catch (err) {
       showToast(err.toString(), ToastType.error);
@@ -68,6 +77,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
         showToast('Nota berhasil dicetak', ToastType.success);
         ref.read(notaDraftProvider.notifier).reset();
         _customerCtrl.clear();
+        _clearNameFocusNodes();
         setState(() => _receivedText = '');
       } else {
         showToast('Gagal mencetak. Cek koneksi printer.', ToastType.error);
@@ -82,8 +92,16 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
   void _handleNewNota() {
     ref.read(notaDraftProvider.notifier).reset();
     _customerCtrl.clear();
+    _clearNameFocusNodes();
     setState(() => _receivedText = '');
     showToast('Nota baru dibuat', ToastType.info);
+  }
+
+  void _clearNameFocusNodes() {
+    for (final node in _nameFocusNodes.values) {
+      node.dispose();
+    }
+    _nameFocusNodes.clear();
   }
 
   @override
@@ -120,11 +138,26 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
                   onUpdateItem: (id, {name, price, qty, totalOverride, clearOverride = false}) => ref
                       .read(notaDraftProvider.notifier)
                       .updateItem(id, name: name, price: price, qty: qty, totalOverride: totalOverride, clearOverride: clearOverride),
-                  onRemoveItem: (id) => ref.read(notaDraftProvider.notifier).removeItem(id),
+                  onRemoveItem: (id) {
+                    ref.read(notaDraftProvider.notifier).removeItem(id);
+                    _nameFocusNodes.remove(id)?.dispose();
+                  },
                   onAddRow: () => ref.read(notaDraftProvider.notifier).addRow(),
                   onEnterName: (_) {},
+                  nameFocusNode: _nameFocusNodeFor,
                   onEnterQty: (id, isLast) {
-                    if (isLast) ref.read(notaDraftProvider.notifier).ensureTrailingRow();
+                    final notifier = ref.read(notaDraftProvider.notifier);
+                    if (isLast) notifier.ensureTrailingRow();
+                    // Pindah fokus ke kolom "Nama Barang" pada baris berikutnya,
+                    // langsung setelah frame ini selesai (baris baru sudah ada di tree).
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      final items = ref.read(notaDraftProvider).items;
+                      final idx = items.indexWhere((it) => it.id == id);
+                      if (idx >= 0 && idx + 1 < items.length) {
+                        _nameFocusNodeFor(items[idx + 1].id).requestFocus();
+                      }
+                    });
                   },
                 ),
                 const SizedBox(height: 16),

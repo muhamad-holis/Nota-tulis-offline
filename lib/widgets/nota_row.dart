@@ -12,6 +12,7 @@ class NotaRow extends StatefulWidget {
   final VoidCallback onEnterName;
   final VoidCallback onEnterQty;
   final bool autoFocus;
+  final FocusNode? nameFocusNode;
 
   const NotaRow({
     super.key,
@@ -21,6 +22,7 @@ class NotaRow extends StatefulWidget {
     required this.onEnterName,
     required this.onEnterQty,
     this.autoFocus = false,
+    this.nameFocusNode,
   });
 
   @override
@@ -90,6 +92,7 @@ class _NotaRowState extends State<NotaRow> {
               child: ProductAutocomplete(
                 value: widget.item.name,
                 autoFocus: widget.autoFocus,
+                focusNode: widget.nameFocusNode,
                 onChanged: (v) => widget.onUpdate(name: v),
                 onSelectProduct: (Product p) {
                   _priceCtrl.text = p.price.round().toString();
@@ -162,6 +165,7 @@ class _NotaRowState extends State<NotaRow> {
     required ValueChanged<String> onSubmitted,
     TextInputType keyboardType = TextInputType.number,
     bool isOverride = false,
+    TextInputAction textInputAction = TextInputAction.next,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -173,6 +177,7 @@ class _NotaRowState extends State<NotaRow> {
         controller: controller,
         focusNode: focusNode,
         keyboardType: keyboardType,
+        textInputAction: textInputAction,
         textAlign: textAlign,
         decoration: const InputDecoration(border: InputBorder.none, isDense: true, hintText: '0'),
         style: TextStyle(fontSize: 13, color: isOverride ? AppColors.amber700 : AppColors.slate700),

@@ -124,6 +124,6 @@ Future<void> learnProductsFromItems(List<NotaItem> items) async {
 }
 
 final productSuggestionsProvider =
-    FutureProvider.family<List<Product>, String>((ref, query) async {
+    FutureProvider.autoDispose.family<List<Product>, String>((ref, query) async {
   return DatabaseHelper.instance.searchProducts(query);
 });
