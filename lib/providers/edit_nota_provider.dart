@@ -11,19 +11,26 @@ class EditNotaState {
   final Nota? original;
   final List<NotaItem> items;
   final String customerName;
+  final String receivedText;
 
-  EditNotaState({required this.original, required this.items, required this.customerName});
+  EditNotaState({
+    required this.original,
+    required this.items,
+    required this.customerName,
+    this.receivedText = '',
+  });
 
   double get total => items.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal);
 
   List<NotaItem> get validItems =>
       items.where((i) => i.name.trim().isNotEmpty && (i.price > 0 || i.qty > 0)).toList();
 
-  EditNotaState copyWith({List<NotaItem>? items, String? customerName}) {
+  EditNotaState copyWith({List<NotaItem>? items, String? customerName, String? receivedText}) {
     return EditNotaState(
       original: original,
       items: items ?? this.items,
       customerName: customerName ?? this.customerName,
+      receivedText: receivedText ?? this.receivedText,
     );
   }
 }
@@ -43,11 +50,18 @@ class EditNotaNotifier extends Notifier<EditNotaState> {
           ? nota.items.map((e) => e.copyWith()).toList()
           : [_emptyRow()],
       customerName: nota.customerName ?? '',
+      receivedText: (nota.bayarTunai != null && nota.bayarTunai! > 0)
+          ? nota.bayarTunai!.round().toString()
+          : '',
     );
   }
 
   void setCustomerName(String name) {
     state = state.copyWith(customerName: name);
+  }
+
+  void setReceivedText(String value) {
+    state = state.copyWith(receivedText: value);
   }
 
   void updateItem(String id, {String? name, double? price, double? qty, double? totalOverride, bool clearOverride = false}) {
@@ -82,15 +96,22 @@ class EditNotaNotifier extends Notifier<EditNotaState> {
     final validItems = state.validItems;
     if (validItems.isEmpty) throw Exception('Nota tidak boleh kosong.');
 
+    final bayarTunai = parseRupiahInput(state.receivedText).toDouble();
     final updated = original!.copyWith(
       customerName: state.customerName.trim().isEmpty ? null : state.customerName.trim(),
       items: validItems,
       total: validItems.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal),
+      bayarTunai: bayarTunai,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
     await DatabaseHelper.instance.updateNota(original.id!, updated);
     await learnProductsFromItems(validItems);
-    state = EditNotaState(original: updated, items: state.items, customerName: state.customerName);
+    state = EditNotaState(
+      original: updated,
+      items: state.items,
+      customerName: state.customerName,
+      receivedText: state.receivedText,
+    );
     return updated;
   }
 }

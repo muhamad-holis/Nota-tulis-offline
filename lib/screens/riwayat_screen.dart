@@ -12,6 +12,7 @@ import '../widgets/history_item.dart';
 import '../widgets/receipt_preview.dart';
 import '../widgets/nota_table.dart';
 import '../widgets/total_bar.dart';
+import '../widgets/kembalian_calculator.dart';
 import '../widgets/toast.dart';
 
 class RiwayatScreen extends ConsumerStatefulWidget {
@@ -313,6 +314,13 @@ class _NotaDetailSheetState extends ConsumerState<_NotaDetailSheet> {
                       ),
                       const SizedBox(height: 12),
                       TotalBar(total: editState.total),
+                      const SizedBox(height: 12),
+                      KembalianCalculator(
+                        total: editState.total,
+                        receivedText: editState.receivedText,
+                        onReceivedTextChange: (v) =>
+                            ref.read(editNotaProvider.notifier).setReceivedText(v),
+                      ),
                       const SizedBox(height: 12),
                       Row(
                         children: [

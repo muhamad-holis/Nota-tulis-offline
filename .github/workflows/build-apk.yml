@@ -82,11 +82,21 @@ jobs:
             fi
           done
 
-      - name: Build APK debug
-        run: flutter build apk --debug
+      - name: Aktifkan minify & shrink resource untuk build release
+        run: |
+          GRADLE_KTS=android/app/build.gradle.kts
+          GRADLE_GROOVY=android/app/build.gradle
+          if [ -f "$GRADLE_KTS" ]; then
+            sed -i '/signingConfig = signingConfigs.getByName("debug")/a\            isMinifyEnabled = true\n            isShrinkResources = true' "$GRADLE_KTS" || true
+          elif [ -f "$GRADLE_GROOVY" ]; then
+            sed -i '/signingConfig signingConfigs.debug/a\            minifyEnabled true\n            shrinkResources true' "$GRADLE_GROOVY" || true
+          fi
+
+      - name: Build APK release (split per ABI)
+        run: flutter build apk --release --split-per-abi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: nota-tulis-apk-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: nota-tulis-apk-release
+          path: build/app/outputs/flutter-apk/*.apk
