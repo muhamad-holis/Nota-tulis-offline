@@ -53,15 +53,30 @@ jobs:
             sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 36/' "$GRADLE_GROOVY" || true
           fi
 
-      - name: Aktifkan mode kompatibilitas Kotlin lama (dibutuhkan file_picker & share_plus)
-        run: |
-          PROPS=android/gradle.properties
-          grep -qxF "android.builtInKotlin=false" "$PROPS" || echo "android.builtInKotlin=false" >> "$PROPS"
-          grep -qxF "android.newDsl=false" "$PROPS" || echo "android.newDsl=false" >> "$PROPS"
-          cat "$PROPS"
-
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Migrasi plugin lama ke Built-in Kotlin (file_picker, share_plus)
+        run: |
+          for PLUGIN in file_picker share_plus; do
+            DIR=$(find "$HOME/.pub-cache/hosted/pub.dev" -maxdepth 1 -iname "${PLUGIN}-*" -type d | sort -V | tail -1)
+            if [ -n "$DIR" ]; then
+              for GRADLE_FILE in "$DIR/android/build.gradle" "$DIR/android/build.gradle.kts"; do
+                if [ -f "$GRADLE_FILE" ]; then
+                  echo "Patching $GRADLE_FILE"
+                  sed -i.bak \
+                    -e "/apply plugin: ['\"]kotlin-android['\"]/d" \
+                    -e "/apply plugin: ['\"]org\.jetbrains\.kotlin\.android['\"]/d" \
+                    -e "/id ['\"]kotlin-android['\"]/d" \
+                    -e "/id ['\"]org\.jetbrains\.kotlin\.android['\"]/d" \
+                    -e '/id("org\.jetbrains\.kotlin\.android")/d' \
+                    -e '/id("kotlin-android")/d' \
+                    "$GRADLE_FILE"
+                  diff "$GRADLE_FILE.bak" "$GRADLE_FILE" || true
+                fi
+              done
+            fi
+          done
 
       - name: Build APK debug
         run: flutter build apk --debug
