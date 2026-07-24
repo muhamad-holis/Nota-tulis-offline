@@ -5,6 +5,7 @@ import '../providers/history_provider.dart';
 import '../providers/edit_nota_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/printer_provider.dart';
+import '../services/receipt_image_share.dart';
 import '../utils/app_colors.dart';
 import '../widgets/app_header.dart';
 import '../widgets/empty_state.dart';
@@ -201,6 +202,12 @@ class _NotaDetailSheetState extends ConsumerState<_NotaDetailSheet> {
     showToast(ok ? 'Nota berhasil dicetak ulang' : 'Gagal mencetak nota', ok ? ToastType.success : ToastType.error);
   }
 
+  Future<void> _shareWhatsApp(Nota nota) async {
+    final settings = ref.read(settingsProvider).value;
+    if (settings == null) return;
+    await shareNotaAsImage(context, nota, settings);
+  }
+
   Future<void> _saveEdit({bool reprint = false}) async {
     setState(() => _busy = true);
     try {
@@ -285,12 +292,27 @@ class _NotaDetailSheetState extends ConsumerState<_NotaDetailSheet> {
                               child: const Column(children: [Icon(Icons.edit_outlined, size: 16), Text('Edit / Tambah', style: TextStyle(fontSize: 12))]),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
                           Expanded(
                             child: ElevatedButton(
                               onPressed: printerUi.printing ? null : () => _reprint(currentNota),
                               style: ElevatedButton.styleFrom(backgroundColor: AppColors.brand600, foregroundColor: Colors.white),
                               child: const Column(children: [Icon(Icons.print_outlined, size: 16), Text('Cetak Ulang', style: TextStyle(fontSize: 12))]),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _shareWhatsApp(currentNota),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF128C4A),
+                                side: const BorderSide(color: Color(0xFF128C4A)),
+                              ),
+                              child: const Column(children: [Icon(Icons.share_outlined, size: 16), Text('Bagikan WA', style: TextStyle(fontSize: 12))]),
                             ),
                           ),
                         ],

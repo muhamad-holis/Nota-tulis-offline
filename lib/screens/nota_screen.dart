@@ -4,6 +4,7 @@ import '../providers/nota_draft_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/history_provider.dart';
+import '../services/receipt_image_share.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_header.dart';
@@ -26,6 +27,7 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
   final Map<String, FocusNode> _nameFocusNodes = {};
   String _receivedText = '';
   bool _saving = false;
+  bool _sharing = false;
   bool _busy = false;
 
   FocusNode _nameFocusNodeFor(String id) =>
@@ -85,6 +87,32 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
     } catch (err) {
       showToast(err.toString(), ToastType.error);
     } finally {
+      _busy = false;
+    }
+  }
+
+  Future<void> _handleShareWhatsApp() async {
+    final settings = ref.read(settingsProvider).value;
+    if (settings == null) return;
+    if (_busy) return;
+    _busy = true;
+    setState(() => _sharing = true);
+    try {
+      final saved = await ref.read(notaDraftProvider.notifier).saveNota(
+            bayarTunai: parseRupiahInput(_receivedText).toDouble(),
+          );
+      ref.read(historyRefreshProvider.notifier).state++;
+      if (!mounted) return;
+      await shareNotaAsImage(context, saved, settings);
+      if (!mounted) return;
+      ref.read(notaDraftProvider.notifier).reset();
+      _customerCtrl.clear();
+      _clearNameFocusNodes();
+      setState(() => _receivedText = '');
+    } catch (err) {
+      showToast(err.toString(), ToastType.error);
+    } finally {
+      if (mounted) setState(() => _sharing = false);
       _busy = false;
     }
   }
@@ -181,8 +209,10 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
               onSave: _handleSave,
               onPrint: _handlePrint,
               onNewNota: _handleNewNota,
-              saving: _saving || printerUi.printing,
-              printing: printerUi.printing || _saving,
+              onShareWhatsApp: _handleShareWhatsApp,
+              saving: _saving || printerUi.printing || _sharing,
+              printing: printerUi.printing || _saving || _sharing,
+              sharing: _sharing || _saving || printerUi.printing,
             ),
           ),
         ],
