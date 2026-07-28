@@ -107,10 +107,10 @@ String _fitRight(String text, int width) {
   return text.length >= width ? text : text.padLeft(width, ' ');
 }
 
-/// Format kolom Qty jadi "2 pcs", "1 dus", "3 renceng", dst.
+/// Format kolom Qty jadi "x2 pcs", "x1 dus", "x3 renceng", dst.
 String _qtyUnitStr(NotaItem item) {
   final unit = item.unit.trim();
-  final qtyStr = formatQty(item.qty);
+  final qtyStr = 'x${formatQty(item.qty)}';
   return unit.isEmpty ? qtyStr : '$qtyStr $unit';
 }
 

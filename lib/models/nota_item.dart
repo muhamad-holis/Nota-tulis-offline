@@ -53,8 +53,10 @@ class NotaItem {
       name: map['name'] as String,
       price: (map['price'] as num).toDouble(),
       qty: (map['qty'] as num).toDouble(),
-      // Nota lama (sebelum fitur satuan) tidak punya field ini, default ke 'pcs'.
-      unit: (map['unit'] as String?)?.trim().isNotEmpty == true ? map['unit'] as String : 'pcs',
+      // Bedakan "field belum pernah ada" (nota lama sebelum fitur satuan) dengan
+      // "field ada tapi sengaja dikosongkan" (map.containsKey tetap true meski isinya '').
+      // Kalau field-nya memang tidak ada sama sekali, baru default ke 'pcs'.
+      unit: map.containsKey('unit') && map['unit'] != null ? map['unit'] as String : 'pcs',
       totalOverride: map['totalOverride'] == null ? null : (map['totalOverride'] as num).toDouble(),
     );
   }
