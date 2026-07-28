@@ -5,7 +5,7 @@ import 'nota_row.dart';
 
 class NotaTable extends StatelessWidget {
   final List<NotaItem> items;
-  final void Function(String id, {String? name, double? price, double? qty, double? totalOverride, bool clearOverride}) onUpdateItem;
+  final void Function(String id, {String? name, double? price, double? qty, String? unit, double? totalOverride, bool clearOverride}) onUpdateItem;
   final ValueChanged<String> onRemoveItem;
   final VoidCallback onAddRow;
   final ValueChanged<String> onEnterName;
@@ -39,9 +39,9 @@ class NotaTable extends StatelessWidget {
             color: AppColors.slate50,
             child: Row(
               children: [
-                Expanded(flex: 4, child: Text('Nama Barang', style: _headStyle())),
+                Expanded(flex: 3, child: Text('Nama Barang', style: _headStyle())),
                 Expanded(flex: 2, child: Text('Harga', textAlign: TextAlign.right, style: _headStyle())),
-                Expanded(flex: 1, child: Text('Qty', textAlign: TextAlign.center, style: _headStyle())),
+                Expanded(flex: 2, child: Text('Qty / Satuan', textAlign: TextAlign.center, style: _headStyle())),
                 Expanded(flex: 2, child: Text('Total', textAlign: TextAlign.right, style: _headStyle())),
                 const SizedBox(width: 28),
               ],
@@ -53,11 +53,12 @@ class NotaTable extends StatelessWidget {
               item: items[i],
               autoFocus: i == 0,
               nameFocusNode: nameFocusNode(items[i].id),
-              onUpdate: ({name, price, qty, totalOverride, clearOverride = false}) => onUpdateItem(
+              onUpdate: ({name, price, qty, unit, totalOverride, clearOverride = false}) => onUpdateItem(
                 items[i].id,
                 name: name,
                 price: price,
                 qty: qty,
+                unit: unit,
                 totalOverride: totalOverride,
                 clearOverride: clearOverride,
               ),

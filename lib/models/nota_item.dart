@@ -3,6 +3,7 @@ class NotaItem {
   final String name;
   final double price;
   final double qty;
+  final String unit;
   final double? totalOverride;
 
   NotaItem({
@@ -10,6 +11,7 @@ class NotaItem {
     required this.name,
     required this.price,
     required this.qty,
+    this.unit = 'pcs',
     this.totalOverride,
   });
 
@@ -20,6 +22,7 @@ class NotaItem {
     String? name,
     double? price,
     double? qty,
+    String? unit,
     double? totalOverride,
     bool clearOverride = false,
   }) {
@@ -28,6 +31,7 @@ class NotaItem {
       name: name ?? this.name,
       price: price ?? this.price,
       qty: qty ?? this.qty,
+      unit: unit ?? this.unit,
       totalOverride: clearOverride ? null : (totalOverride ?? this.totalOverride),
     );
   }
@@ -38,6 +42,7 @@ class NotaItem {
       'name': name,
       'price': price,
       'qty': qty,
+      'unit': unit,
       'totalOverride': totalOverride,
     };
   }
@@ -48,6 +53,8 @@ class NotaItem {
       name: map['name'] as String,
       price: (map['price'] as num).toDouble(),
       qty: (map['qty'] as num).toDouble(),
+      // Nota lama (sebelum fitur satuan) tidak punya field ini, default ke 'pcs'.
+      unit: (map['unit'] as String?)?.trim().isNotEmpty == true ? map['unit'] as String : 'pcs',
       totalOverride: map['totalOverride'] == null ? null : (map['totalOverride'] as num).toDouble(),
     );
   }

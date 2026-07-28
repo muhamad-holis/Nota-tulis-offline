@@ -40,11 +40,11 @@ class NotaDraftNotifier extends Notifier<NotaDraftState> {
     state = state.copyWith(customerName: name);
   }
 
-  void updateItem(String id, {String? name, double? price, double? qty, double? totalOverride, bool clearOverride = false}) {
+  void updateItem(String id, {String? name, double? price, double? qty, String? unit, double? totalOverride, bool clearOverride = false}) {
     state = state.copyWith(
       items: state.items
           .map((item) => item.id == id
-              ? item.copyWith(name: name, price: price, qty: qty, totalOverride: totalOverride, clearOverride: clearOverride)
+              ? item.copyWith(name: name, price: price, qty: qty, unit: unit, totalOverride: totalOverride, clearOverride: clearOverride)
               : item)
           .toList(),
     );
@@ -106,16 +106,18 @@ Future<void> learnProductsFromItems(List<NotaItem> items) async {
   for (final item in items) {
     final name = item.name.trim();
     if (name.isEmpty || !(item.price > 0)) continue;
+    final unit = item.unit.trim();
 
     final existing = await db.findProductByName(name);
     if (existing != null) {
-      if (existing.price == item.price) continue;
-      await db.upsertProduct(existing.copyWith(price: item.price, updatedAt: now));
+      if (existing.price == item.price && existing.lastUnit == unit) continue;
+      await db.upsertProduct(existing.copyWith(price: item.price, lastUnit: unit, updatedAt: now));
     } else {
       await db.upsertProduct(Product(
         uuid: _uuid.v4(),
         name: name,
         price: item.price,
+        lastUnit: unit,
         createdAt: now,
         updatedAt: now,
       ));

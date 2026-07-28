@@ -1,4 +1,5 @@
 import '../models/nota.dart';
+import '../models/nota_item.dart';
 import '../models/settings.dart';
 import '../utils/formatters.dart';
 
@@ -57,7 +58,7 @@ _ColumnWidths _computeColumnWidths(Nota nota, int charWidth) {
 
   for (final item in nota.items) {
     final priceStr = formatRupiah(item.price).replaceFirst('Rp ', '');
-    final qtyStr = 'x${formatQty(item.qty)}';
+    final qtyStr = _qtyUnitStr(item);
     final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
     maxHrgLen = maxHrgLen > priceStr.length ? maxHrgLen : priceStr.length;
     maxQtyLen = maxQtyLen > qtyStr.length ? maxQtyLen : qtyStr.length;
@@ -76,10 +77,15 @@ _ColumnWidths _computeColumnWidths(Nota nota, int charWidth) {
     nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth;
   }
 
-  while (nameWidth < _minNameWidth && (totalWidth > 4 || hrgWidth > 4)) {
-    if (totalWidth > 4) {
+  // PENTING: kolom Harga & Total tidak boleh disusutkan sampai lebih kecil dari
+  // panjang angka aslinya (maxHrgLen/maxTotalLen). Kolom ini tidak pernah dipotong
+  // (beda dengan nama barang yang aman dipotong pakai "..."), jadi kalau nominal
+  // uang tetap dipaksa mengecil, angkanya bisa salah baca/menyesatkan di struk.
+  // Yang boleh mengalah lebih jauh hanya kolom Nama Barang (lihat floor di bawah).
+  while (nameWidth < _minNameWidth && (totalWidth > maxTotalLen || hrgWidth > maxHrgLen)) {
+    if (totalWidth > maxTotalLen) {
       totalWidth -= 1;
-    } else if (hrgWidth > 4) {
+    } else if (hrgWidth > maxHrgLen) {
       hrgWidth -= 1;
     }
     nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth;
@@ -99,6 +105,13 @@ String _fitLeft(String text, int width, {bool truncateMark = false}) {
 
 String _fitRight(String text, int width) {
   return text.length >= width ? text : text.padLeft(width, ' ');
+}
+
+/// Format kolom Qty jadi "2 pcs", "1 dus", "3 renceng", dst.
+String _qtyUnitStr(NotaItem item) {
+  final unit = item.unit.trim();
+  final qtyStr = formatQty(item.qty);
+  return unit.isEmpty ? qtyStr : '$qtyStr $unit';
 }
 
 /// Bangun representasi nota sebagai daftar baris teks (align + bold),
@@ -156,7 +169,7 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
 
   for (final item in nota.items) {
     final priceStr = formatRupiah(item.price).replaceFirst('Rp ', '');
-    final qtyStr = 'x${formatQty(item.qty)}';
+    final qtyStr = _qtyUnitStr(item);
     final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
     push(
       _fitLeft(item.name, cw.nameWidth, truncateMark: true) +

@@ -7,7 +7,7 @@ import 'product_autocomplete.dart';
 
 class NotaRow extends StatefulWidget {
   final NotaItem item;
-  final void Function({String? name, double? price, double? qty, double? totalOverride, bool clearOverride}) onUpdate;
+  final void Function({String? name, double? price, double? qty, String? unit, double? totalOverride, bool clearOverride}) onUpdate;
   final VoidCallback onRemove;
   final VoidCallback onEnterName;
   final VoidCallback onEnterQty;
@@ -32,9 +32,11 @@ class NotaRow extends StatefulWidget {
 class _NotaRowState extends State<NotaRow> {
   late TextEditingController _priceCtrl;
   late TextEditingController _qtyCtrl;
+  late TextEditingController _unitCtrl;
   late TextEditingController _totalCtrl;
   final FocusNode _priceFocus = FocusNode();
   final FocusNode _qtyFocus = FocusNode();
+  final FocusNode _unitFocus = FocusNode();
   final FocusNode _totalFocus = FocusNode();
 
   @override
@@ -42,6 +44,7 @@ class _NotaRowState extends State<NotaRow> {
     super.initState();
     _priceCtrl = TextEditingController(text: widget.item.price > 0 ? widget.item.price.round().toString() : '');
     _qtyCtrl = TextEditingController(text: widget.item.qty > 0 ? formatQty(widget.item.qty) : '');
+    _unitCtrl = TextEditingController(text: widget.item.unit);
     _totalCtrl = TextEditingController(
         text: widget.item.effectiveTotal > 0 ? widget.item.effectiveTotal.round().toString() : '');
   }
@@ -54,15 +57,20 @@ class _NotaRowState extends State<NotaRow> {
     if (!_totalFocus.hasFocus && _totalCtrl.text != textTotal) {
       _totalCtrl.text = textTotal;
     }
+    if (!_unitFocus.hasFocus && _unitCtrl.text != widget.item.unit) {
+      _unitCtrl.text = widget.item.unit;
+    }
   }
 
   @override
   void dispose() {
     _priceCtrl.dispose();
     _qtyCtrl.dispose();
+    _unitCtrl.dispose();
     _totalCtrl.dispose();
     _priceFocus.dispose();
     _qtyFocus.dispose();
+    _unitFocus.dispose();
     _totalFocus.dispose();
     super.dispose();
   }
@@ -88,7 +96,7 @@ class _NotaRowState extends State<NotaRow> {
         child: Row(
           children: [
             Expanded(
-              flex: 4,
+              flex: 3,
               child: ProductAutocomplete(
                 value: widget.item.name,
                 autoFocus: widget.autoFocus,
@@ -96,7 +104,10 @@ class _NotaRowState extends State<NotaRow> {
                 onChanged: (v) => widget.onUpdate(name: v),
                 onSelectProduct: (Product p) {
                   _priceCtrl.text = p.price.round().toString();
-                  widget.onUpdate(name: p.name, price: p.price, clearOverride: true);
+                  if (p.lastUnit != null && p.lastUnit!.trim().isNotEmpty) {
+                    _unitCtrl.text = p.lastUnit!;
+                  }
+                  widget.onUpdate(name: p.name, price: p.price, unit: p.lastUnit, clearOverride: true);
                 },
                 onEnter: () {
                   widget.onEnterName();
@@ -117,20 +128,39 @@ class _NotaRowState extends State<NotaRow> {
             ),
             const SizedBox(width: 6),
             Expanded(
-              flex: 1,
-              child: _numberField(
-                controller: _qtyCtrl,
-                focusNode: _qtyFocus,
-                textAlign: TextAlign.center,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                onChanged: (v) => widget.onUpdate(qty: parseQtyInput(v), clearOverride: true),
-                onSubmitted: (_) {
-                  if (widget.item.qty <= 0) {
-                    _qtyCtrl.text = '1';
-                    widget.onUpdate(qty: 1);
-                  }
-                  widget.onEnterQty();
-                },
+              flex: 2,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _numberField(
+                      controller: _qtyCtrl,
+                      focusNode: _qtyFocus,
+                      textAlign: TextAlign.center,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (v) => widget.onUpdate(qty: parseQtyInput(v), clearOverride: true),
+                      onSubmitted: (_) {
+                        if (widget.item.qty <= 0) {
+                          _qtyCtrl.text = '1';
+                          widget.onUpdate(qty: 1);
+                        }
+                        _unitFocus.requestFocus();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    flex: 3,
+                    child: _textField(
+                      controller: _unitCtrl,
+                      focusNode: _unitFocus,
+                      textAlign: TextAlign.left,
+                      hintText: 'pcs',
+                      onChanged: (v) => widget.onUpdate(unit: v),
+                      onSubmitted: (_) => widget.onEnterQty(),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 6),
@@ -153,6 +183,35 @@ class _NotaRowState extends State<NotaRow> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _textField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required TextAlign textAlign,
+    required ValueChanged<String> onChanged,
+    required ValueChanged<String> onSubmitted,
+    String? hintText,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.slate50,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        textInputAction: textInputAction,
+        textAlign: textAlign,
+        decoration: InputDecoration(border: InputBorder.none, isDense: true, hintText: hintText),
+        style: TextStyle(fontSize: 13, color: AppColors.slate700),
+        onChanged: onChanged,
+        onSubmitted: onSubmitted,
+        onTap: () => controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.text.length),
       ),
     );
   }

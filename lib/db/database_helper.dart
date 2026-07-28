@@ -22,7 +22,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'nota_tulis.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE products (
@@ -31,6 +31,7 @@ class DatabaseHelper {
             name TEXT NOT NULL,
             price REAL NOT NULL,
             category TEXT,
+            lastUnit TEXT,
             createdAt INTEGER NOT NULL,
             updatedAt INTEGER NOT NULL
           )
@@ -69,6 +70,9 @@ class DatabaseHelper {
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await db.execute('CREATE INDEX IF NOT EXISTS idx_products_name ON products(name)');
+        }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE products ADD COLUMN lastUnit TEXT');
         }
       },
     );

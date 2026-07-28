@@ -163,9 +163,9 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
                 const SizedBox(height: 16),
                 NotaTable(
                   items: draft.items,
-                  onUpdateItem: (id, {name, price, qty, totalOverride, clearOverride = false}) => ref
+                  onUpdateItem: (id, {name, price, qty, unit, totalOverride, clearOverride = false}) => ref
                       .read(notaDraftProvider.notifier)
-                      .updateItem(id, name: name, price: price, qty: qty, totalOverride: totalOverride, clearOverride: clearOverride),
+                      .updateItem(id, name: name, price: price, qty: qty, unit: unit, totalOverride: totalOverride, clearOverride: clearOverride),
                   onRemoveItem: (id) {
                     ref.read(notaDraftProvider.notifier).removeItem(id);
                     _nameFocusNodes.remove(id)?.dispose();

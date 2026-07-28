@@ -64,11 +64,11 @@ class EditNotaNotifier extends Notifier<EditNotaState> {
     state = state.copyWith(receivedText: value);
   }
 
-  void updateItem(String id, {String? name, double? price, double? qty, double? totalOverride, bool clearOverride = false}) {
+  void updateItem(String id, {String? name, double? price, double? qty, String? unit, double? totalOverride, bool clearOverride = false}) {
     state = state.copyWith(
       items: state.items
           .map((item) => item.id == id
-              ? item.copyWith(name: name, price: price, qty: qty, totalOverride: totalOverride, clearOverride: clearOverride)
+              ? item.copyWith(name: name, price: price, qty: qty, unit: unit, totalOverride: totalOverride, clearOverride: clearOverride)
               : item)
           .toList(),
     );

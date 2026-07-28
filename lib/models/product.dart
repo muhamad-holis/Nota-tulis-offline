@@ -4,6 +4,7 @@ class Product {
   final String name;
   final double price;
   final String? category;
+  final String? lastUnit;
   final int createdAt;
   final int updatedAt;
 
@@ -13,6 +14,7 @@ class Product {
     required this.name,
     required this.price,
     this.category,
+    this.lastUnit,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -23,6 +25,7 @@ class Product {
     String? name,
     double? price,
     String? category,
+    String? lastUnit,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -32,6 +35,7 @@ class Product {
       name: name ?? this.name,
       price: price ?? this.price,
       category: category ?? this.category,
+      lastUnit: lastUnit ?? this.lastUnit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -44,6 +48,7 @@ class Product {
       'name': name,
       'price': price,
       'category': category,
+      'lastUnit': lastUnit,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -56,6 +61,7 @@ class Product {
       name: map['name'] as String,
       price: (map['price'] as num).toDouble(),
       category: map['category'] as String?,
+      lastUnit: map['lastUnit'] as String?,
       createdAt: map['createdAt'] as int,
       updatedAt: map['updatedAt'] as int,
     );
