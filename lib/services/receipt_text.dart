@@ -107,10 +107,10 @@ String _fitRight(String text, int width) {
   return text.length >= width ? text : text.padLeft(width, ' ');
 }
 
-/// Format kolom Qty jadi "x2 pcs", "x1 dus", "x3 renceng", dst.
+/// Format kolom Qty jadi "2 pcs", "1 dus", "3 renceng", dst.
 String _qtyUnitStr(NotaItem item) {
   final unit = item.unit.trim();
-  final qtyStr = 'x${formatQty(item.qty)}';
+  final qtyStr = formatQty(item.qty);
   return unit.isEmpty ? qtyStr : '$qtyStr $unit';
 }
 
@@ -160,9 +160,9 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
   final cw = _computeColumnWidths(nota, charWidth);
 
   push(
-    _fitLeft('Barang', cw.nameWidth) +
+    _fitLeft('Qty', cw.qtyWidth) +
+        _fitLeft('Barang', cw.nameWidth) +
         _fitRight('Hrg', cw.hrgWidth) +
-        _fitRight('Qty', cw.qtyWidth) +
         _fitRight('Total', cw.totalWidth),
   );
   push(divider);
@@ -172,9 +172,9 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
     final qtyStr = _qtyUnitStr(item);
     final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
     push(
-      _fitLeft(item.name, cw.nameWidth, truncateMark: true) +
+      _fitLeft(qtyStr, cw.qtyWidth) +
+          _fitLeft(item.name, cw.nameWidth, truncateMark: true) +
           _fitRight(priceStr, cw.hrgWidth) +
-          _fitRight(qtyStr, cw.qtyWidth) +
           _fitRight(totalStr, cw.totalWidth),
     );
   }
