@@ -49,7 +49,8 @@ class _ColumnWidths {
 }
 
 const int _minNameWidth = 8;
-const int _columnGap = 1;
+const int _numColumns = 4; // Qty | Barang | Harga | Total
+const int _columnGaps = _numColumns - 1; // 3 spasi pemisah eksplisit antar kolom
 
 _ColumnWidths _computeColumnWidths(Nota nota, int charWidth) {
   int maxHrgLen = 'Hrg'.length;
@@ -65,32 +66,20 @@ _ColumnWidths _computeColumnWidths(Nota nota, int charWidth) {
     maxTotalLen = maxTotalLen > totalStr.length ? maxTotalLen : totalStr.length;
   }
 
-  int hrgWidth = maxHrgLen + _columnGap;
-  int qtyWidth = maxQtyLen + _columnGap;
-  int totalWidth = maxTotalLen + _columnGap;
-  int nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth;
-
-  if (nameWidth < _minNameWidth) {
-    hrgWidth = maxHrgLen;
-    qtyWidth = maxQtyLen;
-    totalWidth = maxTotalLen;
-    nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth;
-  }
+  // Lebar kolom Qty/Harga/Total pas-pasan sesuai isi terpanjangnya (tanpa gap
+  // dibakar di dalam), karena spasi antar kolom nanti ditambah eksplisit saat
+  // baris dirangkai. Dengan begitu kolom Qty bisa rata kanan dan tetap ada jarak
+  // ke kolom Barang di sebelahnya (tidak nempel).
+  int hrgWidth = maxHrgLen;
+  int qtyWidth = maxQtyLen;
+  int totalWidth = maxTotalLen;
+  int nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth - _columnGaps;
 
   // PENTING: kolom Harga & Total tidak boleh disusutkan sampai lebih kecil dari
   // panjang angka aslinya (maxHrgLen/maxTotalLen). Kolom ini tidak pernah dipotong
   // (beda dengan nama barang yang aman dipotong pakai "..."), jadi kalau nominal
   // uang tetap dipaksa mengecil, angkanya bisa salah baca/menyesatkan di struk.
   // Yang boleh mengalah lebih jauh hanya kolom Nama Barang (lihat floor di bawah).
-  while (nameWidth < _minNameWidth && (totalWidth > maxTotalLen || hrgWidth > maxHrgLen)) {
-    if (totalWidth > maxTotalLen) {
-      totalWidth -= 1;
-    } else if (hrgWidth > maxHrgLen) {
-      hrgWidth -= 1;
-    }
-    nameWidth = charWidth - hrgWidth - qtyWidth - totalWidth;
-  }
-
   nameWidth = nameWidth > 4 ? nameWidth : 4;
   return _ColumnWidths(nameWidth, hrgWidth, qtyWidth, totalWidth);
 }
@@ -160,10 +149,10 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
   final cw = _computeColumnWidths(nota, charWidth);
 
   push(
-    _fitLeft('Qty', cw.qtyWidth) +
-        _fitLeft('Barang', cw.nameWidth) +
-        _fitRight('Hrg', cw.hrgWidth) +
-        _fitRight('Total', cw.totalWidth),
+    '${_fitRight('Qty', cw.qtyWidth)} '
+    '${_fitLeft('Barang', cw.nameWidth)} '
+    '${_fitRight('Hrg', cw.hrgWidth)} '
+    '${_fitRight('Total', cw.totalWidth)}',
   );
   push(divider);
 
@@ -172,10 +161,10 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
     final qtyStr = _qtyUnitStr(item);
     final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
     push(
-      _fitLeft(qtyStr, cw.qtyWidth) +
-          _fitLeft(item.name, cw.nameWidth, truncateMark: true) +
-          _fitRight(priceStr, cw.hrgWidth) +
-          _fitRight(totalStr, cw.totalWidth),
+      '${_fitRight(qtyStr, cw.qtyWidth)} '
+      '${_fitLeft(item.name, cw.nameWidth, truncateMark: true)} '
+      '${_fitRight(priceStr, cw.hrgWidth)} '
+      '${_fitRight(totalStr, cw.totalWidth)}',
     );
   }
 
