@@ -229,23 +229,61 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               // --- Ukuran Kertas ---
               SettingsSection(
                 title: 'Ukuran Kertas',
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final size in ['58', '80'])
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: OutlinedButton(
-                            onPressed: () => ref.read(settingsProvider.notifier).patchSettings({'paperSize': size}),
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: settings.paperSize == size ? AppColors.brand50 : null,
-                              foregroundColor: settings.paperSize == size ? AppColors.brand700 : AppColors.slate600,
-                              side: BorderSide(color: settings.paperSize == size ? AppColors.brand500 : AppColors.slate200),
+                    Row(
+                      children: [
+                        for (final size in ['58', '80'])
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: OutlinedButton(
+                                onPressed: () => ref.read(settingsProvider.notifier).patchSettings({'paperSize': size}),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: settings.paperSize == size ? AppColors.brand50 : null,
+                                  foregroundColor: settings.paperSize == size ? AppColors.brand700 : AppColors.slate600,
+                                  side: BorderSide(color: settings.paperSize == size ? AppColors.brand500 : AppColors.slate200),
+                                ),
+                                child: Text('$size mm'),
+                              ),
                             ),
-                            child: Text('$size mm'),
                           ),
-                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(color: AppColors.slate50, borderRadius: BorderRadius.circular(14)),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Font Kecil (kondensasi)',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.slate700)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  settings.paperSize == '58'
+                                      ? (settings.smallFont
+                                          ? 'Aktif: nama barang dapat ruang lebih lega (setara tampilan 80mm), tapi tulisan jadi lebih kecil/rapat.'
+                                          : 'Muat lebih banyak kolom (setara tampilan 80mm) di kertas 58mm, tulisannya jadi lebih kecil. Coba Test Print dulu sebelum dipakai.')
+                                      : 'Cuma berpengaruh kalau Ukuran Kertas di atas dipilih 58mm.',
+                                  style: TextStyle(fontSize: 11, color: AppColors.slate400),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Switch(
+                            value: settings.smallFont,
+                            onChanged: (v) => ref.read(settingsProvider.notifier).patchSettings({'smallFont': v ? 1 : 0}),
+                            activeColor: AppColors.brand600,
+                          ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
               ),

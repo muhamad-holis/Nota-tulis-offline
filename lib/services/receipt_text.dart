@@ -11,7 +11,14 @@ class ReceiptLine {
   ReceiptLine(this.text, {this.align = 'left', this.bold = false});
 }
 
-int getCharWidth(Settings settings) => settings.paperSize == '80' ? 42 : 32;
+/// Lebar baris dalam karakter. Kertas 80mm selalu 42 kolom (font normal printer).
+/// Kertas 58mm normalnya 32 kolom, TAPI kalau "Font Kecil" diaktifkan, printer
+/// diminta pakai font kondensasi (Font B) yang muat 42 karakter juga di kertas
+/// yang sama fisiknya cuma 58mm.
+int getCharWidth(Settings settings) {
+  if (settings.paperSize == '80') return 42;
+  return settings.smallFont ? 42 : 32;
+}
 
 List<String> wrapText(String text, int width) {
   if (text.isEmpty) return [''];

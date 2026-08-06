@@ -20,6 +20,7 @@ class Settings {
   final String headerText;
   final String footerText;
   final String paperSize; // "58" atau "80"
+  final bool smallFont; // pakai font kondensasi printer (Font B) biar lebih banyak kolom muat
   final PrinterDevice? printer;
   final int lastNotaNumber;
 
@@ -33,6 +34,7 @@ class Settings {
     required this.headerText,
     required this.footerText,
     required this.paperSize,
+    this.smallFont = false,
     this.printer,
     required this.lastNotaNumber,
   });
@@ -47,6 +49,7 @@ class Settings {
       headerText: 'TERIMA KASIH\nSELAMAT DATANG',
       footerText: 'Terima kasih atas kepercayaan Anda.',
       paperSize: '58',
+      smallFont: false,
       printer: null,
       lastNotaNumber: 0,
     );
@@ -62,6 +65,7 @@ class Settings {
     String? headerText,
     String? footerText,
     String? paperSize,
+    bool? smallFont,
     PrinterDevice? printer,
     int? lastNotaNumber,
   }) {
@@ -75,6 +79,7 @@ class Settings {
       headerText: headerText ?? this.headerText,
       footerText: footerText ?? this.footerText,
       paperSize: paperSize ?? this.paperSize,
+      smallFont: smallFont ?? this.smallFont,
       printer: printer ?? this.printer,
       lastNotaNumber: lastNotaNumber ?? this.lastNotaNumber,
     );
@@ -91,6 +96,7 @@ class Settings {
       'headerText': headerText,
       'footerText': footerText,
       'paperSize': paperSize,
+      'smallFont': smallFont ? 1 : 0,
       'printerId': printer?.id,
       'printerName': printer?.name,
       'lastNotaNumber': lastNotaNumber,
@@ -110,6 +116,7 @@ class Settings {
       headerText: map['headerText'] as String? ?? '',
       footerText: map['footerText'] as String? ?? '',
       paperSize: map['paperSize'] as String? ?? '58',
+      smallFont: (map['smallFont'] as int? ?? 0) == 1,
       printer: (printerId != null && printerName != null)
           ? PrinterDevice(id: printerId, name: printerName)
           : null,

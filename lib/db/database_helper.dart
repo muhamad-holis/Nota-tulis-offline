@@ -22,7 +22,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'nota_tulis.db');
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE products (
@@ -61,6 +61,7 @@ class DatabaseHelper {
             headerText TEXT,
             footerText TEXT,
             paperSize TEXT NOT NULL DEFAULT '58',
+            smallFont INTEGER NOT NULL DEFAULT 0,
             printerId TEXT,
             printerName TEXT,
             lastNotaNumber INTEGER NOT NULL DEFAULT 0
@@ -73,6 +74,9 @@ class DatabaseHelper {
         }
         if (oldVersion < 3) {
           await db.execute('ALTER TABLE products ADD COLUMN lastUnit TEXT');
+        }
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE settings ADD COLUMN smallFont INTEGER NOT NULL DEFAULT 0');
         }
       },
     );

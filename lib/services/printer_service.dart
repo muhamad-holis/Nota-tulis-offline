@@ -14,6 +14,8 @@ final List<int> _cmdAlignLeft = [_esc, 0x61, 0x00];
 final List<int> _cmdAlignCenter = [_esc, 0x61, 0x01];
 final List<int> _cmdBoldOn = [_esc, 0x45, 0x01];
 final List<int> _cmdBoldOff = [_esc, 0x45, 0x00];
+final List<int> _cmdFontA = [_esc, 0x4D, 0x00]; // font normal (~32 kolom di 58mm)
+final List<int> _cmdFontB = [_esc, 0x4D, 0x01]; // font kondensasi (~42 kolom di 58mm)
 final List<int> _cmdCut = [_gs, 0x56, 0x42, 0x00];
 
 final Guid _printerServiceUuid = Guid('000018f0-0000-1000-8000-00805f9b34fb');
@@ -171,6 +173,7 @@ class PrinterService {
     final isWide = settings.paperSize == '80';
 
     push(_cmdInit);
+    push(settings.smallFont ? _cmdFontB : _cmdFontA);
 
     if (settings.logo != null && settings.showLogo) {
       try {
@@ -199,6 +202,7 @@ class PrinterService {
       line(rl.text);
     }
     if (currentBold) push(_cmdBoldOff);
+    if (settings.smallFont) push(_cmdFontA); // kembalikan ke font normal buat print berikutnya
 
     line();
     line();
@@ -221,12 +225,39 @@ class PrinterService {
     void line([String text = '']) => push(('$text\n').codeUnits);
 
     push(_cmdInit);
+    push(_cmdFontA);
     push(_cmdAlignCenter);
     push(_cmdBoldOn);
     line('TEST PRINT');
     push(_cmdBoldOff);
     line(settings.storeName.isNotEmpty ? settings.storeName : 'Nota Tulis');
     line('Printer terhubung dengan baik');
+    line();
+
+    // Perbandingan Font Normal vs Font Kecil, supaya bisa dicek langsung di
+    // kertas apakah printer ini benar-benar mendukung font kondensasi (Font B)
+    // sebelum dipakai untuk cetak nota sungguhan.
+    push(_cmdAlignLeft);
+    push(_cmdBoldOn);
+    line('--- Font Normal (32 kolom) ---');
+    push(_cmdBoldOff);
+    push(_cmdFontA);
+    line('12345678901234567890123456789012');
+    line('Contoh nama barang panjang sekali');
+    line();
+    push(_cmdBoldOn);
+    line('--- Font Kecil (42 kolom) ---');
+    push(_cmdBoldOff);
+    push(_cmdFontB);
+    line('123456789012345678901234567890123456789012');
+    line('Contoh nama barang panjang sekali sekali');
+    push(_cmdFontA);
+    line();
+    push(_cmdAlignCenter);
+    line('Kalau baris "Font Kecil" di atas');
+    line('terlihat lebih rapat/kecil dari');
+    line('"Font Normal", berarti printer ini');
+    line('mendukung fitur Font Kecil.');
     line();
     line();
     push(_cmdCut);
