@@ -8,6 +8,7 @@ import '../services/receipt_image_share.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_header.dart';
+import '../widgets/catalog_sheet.dart';
 import '../widgets/nota_table.dart';
 import '../widgets/total_bar.dart';
 import '../widgets/kembalian_calculator.dart';
@@ -161,6 +162,20 @@ class _NotaScreenState extends ConsumerState<NotaScreen> {
                   onChanged: (v) => ref.read(notaDraftProvider.notifier).setCustomerName(v),
                 ),
                 const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Text('Daftar Barang',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.slate600)),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => showCatalogSheet(context),
+                      icon: Icon(Icons.grid_view_rounded, size: 18, color: AppColors.brand600),
+                      label: Text('Katalog',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.brand600)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
                 NotaTable(
                   items: draft.items,
                   onUpdateItem: (id, {name, price, qty, unit, totalOverride, clearOverride = false}) => ref

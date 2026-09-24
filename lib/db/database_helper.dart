@@ -157,6 +157,21 @@ class DatabaseHelper {
     return rows.map((r) => Product.fromMap(r)).toList();
   }
 
+  /// Daftar produk untuk katalog, urut abjad. [query] kosong = tampilkan semua.
+  Future<List<Product>> listProducts({String query = ''}) async {
+    final db = await database;
+    final q = query.trim().toLowerCase();
+    final rows = q.isEmpty
+        ? await db.query('products', orderBy: 'LOWER(name) ASC')
+        : await db.query(
+            'products',
+            where: 'LOWER(name) LIKE ?',
+            whereArgs: ['%$q%'],
+            orderBy: 'LOWER(name) ASC',
+          );
+    return rows.map((r) => Product.fromMap(r)).toList();
+  }
+
   Future<void> replaceAllProducts(List<Map<String, dynamic>> rows) async {
     final db = await database;
     await db.delete('products');

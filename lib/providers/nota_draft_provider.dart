@@ -69,6 +69,38 @@ class NotaDraftNotifier extends Notifier<NotaDraftState> {
     state = NotaDraftState(items: [_emptyRow()], customerName: '');
   }
 
+  /// Tambah produk dari katalog ke draft nota.
+  /// - Kalau barang dengan nama sama sudah ada di nota, qty-nya +1.
+  /// - Kalau belum ada, isi baris kosong pertama (atau buat baris baru).
+  void addProductFromCatalog(Product p) {
+    final key = p.name.trim().toLowerCase();
+    final items = [...state.items];
+
+    final existingIdx = items.indexWhere((i) => i.name.trim().toLowerCase() == key);
+    if (existingIdx >= 0) {
+      final it = items[existingIdx];
+      items[existingIdx] = it.copyWith(qty: (it.qty > 0 ? it.qty : 0) + 1, clearOverride: true);
+      state = state.copyWith(items: items);
+      return;
+    }
+
+    final unit = p.lastUnit ?? 'pcs';
+    final emptyIdx = items.indexWhere((i) => i.name.trim().isEmpty && i.price <= 0);
+    if (emptyIdx >= 0) {
+      items[emptyIdx] = items[emptyIdx].copyWith(
+        name: p.name,
+        price: p.price,
+        qty: 1,
+        unit: unit,
+        clearOverride: true,
+      );
+    } else {
+      items.add(NotaItem(id: generateItemId(), name: p.name, price: p.price, qty: 1, unit: unit));
+    }
+    state = state.copyWith(items: items);
+    ensureTrailingRow();
+  }
+
   /// Simpan draft nota baru ke database, dan "pelajari" nama/harga barang.
   Future<Nota> saveNota({double? bayarTunai}) async {
     final validItems = state.validItems;
@@ -124,6 +156,12 @@ Future<void> learnProductsFromItems(List<NotaItem> items) async {
     }
   }
 }
+
+/// Seluruh produk di katalog (boleh difilter dengan kata kunci pencarian).
+final catalogProductsProvider =
+    FutureProvider.autoDispose.family<List<Product>, String>((ref, query) async {
+  return DatabaseHelper.instance.listProducts(query: query);
+});
 
 final productSuggestionsProvider =
     FutureProvider.autoDispose.family<List<Product>, String>((ref, query) async {

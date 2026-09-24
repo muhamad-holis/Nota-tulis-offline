@@ -60,6 +60,14 @@ class _NotaRowState extends State<NotaRow> {
     if (!_unitFocus.hasFocus && _unitCtrl.text != widget.item.unit) {
       _unitCtrl.text = widget.item.unit;
     }
+    final textPrice = widget.item.price > 0 ? widget.item.price.round().toString() : '';
+    if (!_priceFocus.hasFocus && _priceCtrl.text != textPrice) {
+      _priceCtrl.text = textPrice;
+    }
+    final textQty = widget.item.qty > 0 ? formatQty(widget.item.qty) : '';
+    if (!_qtyFocus.hasFocus && _qtyCtrl.text != textQty) {
+      _qtyCtrl.text = textQty;
+    }
   }
 
   @override
