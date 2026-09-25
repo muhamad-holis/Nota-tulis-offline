@@ -153,26 +153,58 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
   }
   push(divider);
 
-  final cw = _computeColumnWidths(nota, charWidth);
+  if (settings.smallFont) {
+    // Mode hemat kertas: tabel rapat 1 baris per barang (Qty | Barang | Hrg | Total).
+    final cw = _computeColumnWidths(nota, charWidth);
 
-  push(
-    '${_fitRight('Qty', cw.qtyWidth)} '
-    '${_fitLeft('Barang', cw.nameWidth)} '
-    '${_fitRight('Hrg', cw.hrgWidth)} '
-    '${_fitRight('Total', cw.totalWidth)}',
-  );
-  push(divider);
-
-  for (final item in nota.items) {
-    final priceStr = formatRupiah(item.price).replaceFirst('Rp ', '');
-    final qtyStr = _qtyUnitStr(item);
-    final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
     push(
-      '${_fitRight(qtyStr, cw.qtyWidth)} '
-      '${_fitLeft(item.name, cw.nameWidth, truncateMark: true)} '
-      '${_fitRight(priceStr, cw.hrgWidth)} '
-      '${_fitRight(totalStr, cw.totalWidth)}',
+      '${_fitRight('Qty', cw.qtyWidth)} '
+      '${_fitLeft('Barang', cw.nameWidth)} '
+      '${_fitRight('Hrg', cw.hrgWidth)} '
+      '${_fitRight('Total', cw.totalWidth)}',
     );
+    push(divider);
+
+    for (final item in nota.items) {
+      final priceStr = formatRupiah(item.price).replaceFirst('Rp ', '');
+      final qtyStr = _qtyUnitStr(item);
+      final totalStr = formatRupiah(item.effectiveTotal).replaceFirst('Rp ', '');
+      push(
+        '${_fitRight(qtyStr, cw.qtyWidth)} '
+        '${_fitLeft(item.name, cw.nameWidth, truncateMark: true)} '
+        '${_fitRight(priceStr, cw.hrgWidth)} '
+        '${_fitRight(totalStr, cw.totalWidth)}',
+      );
+    }
+  } else {
+    // Mode normal: 2 baris per barang, tanpa header tabel.
+    // Baris 1: nama barang (kiri) + total barang (kanan).
+    // Baris 2: "qty satuan x harga satuan", sedikit menjorok, sebagai rincian.
+    for (final item in nota.items) {
+      final totalStr = formatRupiah(item.effectiveTotal);
+      final nameMaxWidth = charWidth - totalStr.length - 1;
+
+      if (nameMaxWidth >= _minNameWidth && item.name.length <= nameMaxWidth) {
+        push(_fitLeft(item.name, nameMaxWidth) + ' ' + totalStr);
+      } else {
+        // Nama kepanjangan: bungkus dulu, taruh total di baris terakhir kalau
+        // masih ada ruang, kalau tidak taruh di barisnya sendiri (rata kanan).
+        final wrapped = wrapText(item.name, charWidth);
+        for (var i = 0; i < wrapped.length - 1; i++) {
+          push(wrapped[i]);
+        }
+        final lastLine = wrapped.last;
+        if (charWidth - lastLine.length - 1 >= totalStr.length) {
+          push(_fitLeft(lastLine, charWidth - totalStr.length) + totalStr);
+        } else {
+          push(lastLine);
+          push(_fitRight(totalStr, charWidth));
+        }
+      }
+
+      final detailLine = '  ${_qtyUnitStr(item)} x ${formatRupiah(item.price)}';
+      push(detailLine);
+    }
   }
 
   push(divider);
