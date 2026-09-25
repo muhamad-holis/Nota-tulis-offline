@@ -172,6 +172,12 @@ class DatabaseHelper {
     return rows.map((r) => Product.fromMap(r)).toList();
   }
 
+  /// Hapus satu produk dari katalog. Tidak mengubah nota yang sudah tersimpan.
+  Future<void> deleteProduct(int id) async {
+    final db = await database;
+    await db.delete('products', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> replaceAllProducts(List<Map<String, dynamic>> rows) async {
     final db = await database;
     await db.delete('products');

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../db/database_helper.dart';
 import '../models/product.dart';
 import '../providers/nota_draft_provider.dart';
 import '../utils/app_colors.dart';
@@ -45,6 +46,29 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
       if (!mounted) return;
       setState(() => _query = v.trim());
     });
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, Product p) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus produk?'),
+        content: Text(
+          '"${p.name}" akan dihapus dari katalog. Nota yang sudah tersimpan tidak berubah.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   String _priceLabel(Product p) {
@@ -131,31 +155,51 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
                     itemBuilder: (context, i) {
                       final p = products[i];
                       final qty = qtyInNota[p.name.trim().toLowerCase()] ?? 0;
-                      return ListTile(
-                        onTap: () =>
-                            ref.read(notaDraftProvider.notifier).addProductFromCatalog(p),
-                        leading: qty > 0
-                            ? Container(
-                                constraints: const BoxConstraints(minWidth: 32),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.brand600,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '×${formatQty(qty)}',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                                ),
-                              )
-                            : Icon(Icons.add_circle_outline, color: AppColors.brand600),
-                        title: Text(p.name,
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.slate800)),
-                        subtitle: Text(_priceLabel(p),
-                            style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.slate500)),
+                      return Dismissible(
+                        key: ValueKey('product_${p.id}'),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          color: Colors.red.shade400,
+                          child: const Icon(Icons.delete_outline, color: Colors.white),
+                        ),
+                        confirmDismiss: (_) => _confirmDelete(context, p),
+                        onDismissed: (_) async {
+                          await DatabaseHelper.instance.deleteProduct(p.id!);
+                          ref.invalidate(catalogProductsProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('"${p.name}" dihapus dari katalog')),
+                            );
+                          }
+                        },
+                        child: ListTile(
+                          onTap: () =>
+                              ref.read(notaDraftProvider.notifier).addProductFromCatalog(p),
+                          leading: qty > 0
+                              ? Container(
+                                  constraints: const BoxConstraints(minWidth: 32),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.brand600,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '×${formatQty(qty)}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                )
+                              : Icon(Icons.add_circle_outline, color: AppColors.brand600),
+                          title: Text(p.name,
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.slate800)),
+                          subtitle: Text(_priceLabel(p),
+                              style: TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.slate500)),
+                        ),
                       );
                     },
                   );
