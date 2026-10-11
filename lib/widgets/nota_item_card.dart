@@ -4,6 +4,7 @@ import '../models/product.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import 'product_autocomplete.dart';
+import 'unit_picker.dart';
 
 /// Kartu satu item di halaman Buat Nota (Nama item, Jumlah, Satuan, Harga Satuan).
 class NotaItemCard extends StatefulWidget {
@@ -31,17 +32,14 @@ class NotaItemCard extends StatefulWidget {
 class _NotaItemCardState extends State<NotaItemCard> {
   late final TextEditingController _priceCtrl;
   late final TextEditingController _qtyCtrl;
-  late final TextEditingController _unitCtrl;
   final FocusNode _priceFocus = FocusNode();
   final FocusNode _qtyFocus = FocusNode();
-  final FocusNode _unitFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _priceCtrl = TextEditingController(text: widget.item.price > 0 ? widget.item.price.round().toString() : '');
     _qtyCtrl = TextEditingController(text: widget.item.qty > 0 ? formatQty(widget.item.qty) : '');
-    _unitCtrl = TextEditingController(text: widget.item.unit);
   }
 
   @override
@@ -51,17 +49,14 @@ class _NotaItemCardState extends State<NotaItemCard> {
     if (!_priceFocus.hasFocus && _priceCtrl.text != textPrice) _priceCtrl.text = textPrice;
     final textQty = widget.item.qty > 0 ? formatQty(widget.item.qty) : '';
     if (!_qtyFocus.hasFocus && _qtyCtrl.text != textQty) _qtyCtrl.text = textQty;
-    if (!_unitFocus.hasFocus && _unitCtrl.text != widget.item.unit) _unitCtrl.text = widget.item.unit;
   }
 
   @override
   void dispose() {
     _priceCtrl.dispose();
     _qtyCtrl.dispose();
-    _unitCtrl.dispose();
     _priceFocus.dispose();
     _qtyFocus.dispose();
-    _unitFocus.dispose();
     super.dispose();
   }
 
@@ -107,9 +102,6 @@ class _NotaItemCardState extends State<NotaItemCard> {
                     onChanged: (v) => widget.onUpdate(name: v),
                     onSelectProduct: (Product p) {
                       _priceCtrl.text = p.price.round().toString();
-                      if (p.lastUnit != null && p.lastUnit!.trim().isNotEmpty) {
-                        _unitCtrl.text = p.lastUnit!;
-                      }
                       widget.onUpdate(name: p.name, price: p.price, unit: p.lastUnit, clearOverride: true);
                     },
                     onEnter: () => _qtyFocus.requestFocus(),
@@ -144,7 +136,7 @@ class _NotaItemCardState extends State<NotaItemCard> {
                                 _qtyCtrl.text = '1';
                                 widget.onUpdate(qty: 1);
                               }
-                              _unitFocus.requestFocus();
+                              _priceFocus.requestFocus();
                             },
                           ),
                         ),
@@ -159,12 +151,9 @@ class _NotaItemCardState extends State<NotaItemCard> {
                 child: _labeled(
                   'Satuan',
                   child: _box(
-                    child: _input(
-                      controller: _unitCtrl,
-                      focusNode: _unitFocus,
-                      hint: 'pcs',
-                      onChanged: (v) => widget.onUpdate(unit: v),
-                      onSubmitted: (_) => _priceFocus.requestFocus(),
+                    child: UnitSelectField(
+                      value: widget.item.unit,
+                      onChanged: (u) => widget.onUpdate(unit: u),
                     ),
                   ),
                 ),

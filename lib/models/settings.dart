@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+/// Daftar satuan bawaan (bisa diubah di Pengaturan > Satuan Barang).
+const List<String> kDefaultUnits = ['pcs', 'bks', 'rcg', 'kg', 'gr', 'ltr', 'btl', 'dus', 'pak', 'tbg'];
+
 class PrinterDevice {
   final String id;
   final String name;
@@ -18,6 +23,7 @@ class Settings {
   final String? logo; // base64 PNG string, setara dataURL di versi lama
   final bool showLogo;
   final String? qrisImage; // base64 PNG gambar QRIS pembayaran
+  final List<String> units; // pilihan satuan barang
   final String headerText;
   final String footerText;
   final String paperSize; // "58" atau "80"
@@ -33,6 +39,7 @@ class Settings {
     this.logo,
     required this.showLogo,
     this.qrisImage,
+    this.units = kDefaultUnits,
     required this.headerText,
     required this.footerText,
     required this.paperSize,
@@ -66,6 +73,7 @@ class Settings {
     bool? showLogo,
     String? qrisImage,
     bool clearQrisImage = false,
+    List<String>? units,
     String? headerText,
     String? footerText,
     String? paperSize,
@@ -81,6 +89,7 @@ class Settings {
       logo: clearLogo ? null : (logo ?? this.logo),
       showLogo: showLogo ?? this.showLogo,
       qrisImage: clearQrisImage ? null : (qrisImage ?? this.qrisImage),
+      units: units ?? this.units,
       headerText: headerText ?? this.headerText,
       footerText: footerText ?? this.footerText,
       paperSize: paperSize ?? this.paperSize,
@@ -99,6 +108,7 @@ class Settings {
       'logo': logo,
       'showLogo': showLogo ? 1 : 0,
       'qrisImage': qrisImage,
+      'units': jsonEncode(units),
       'headerText': headerText,
       'footerText': footerText,
       'paperSize': paperSize,
@@ -120,6 +130,7 @@ class Settings {
       logo: map['logo'] as String?,
       showLogo: (map['showLogo'] as int? ?? 1) == 1,
       qrisImage: map['qrisImage'] as String?,
+      units: _decodeUnits(map['units']),
       headerText: map['headerText'] as String? ?? '',
       footerText: map['footerText'] as String? ?? '',
       paperSize: map['paperSize'] as String? ?? '58',
@@ -130,4 +141,14 @@ class Settings {
       lastNotaNumber: map['lastNotaNumber'] as int? ?? 0,
     );
   }
+}
+
+List<String> _decodeUnits(dynamic raw) {
+  if (raw is String && raw.trim().isNotEmpty) {
+    try {
+      final list = (jsonDecode(raw) as List).map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+  }
+  return kDefaultUnits;
 }

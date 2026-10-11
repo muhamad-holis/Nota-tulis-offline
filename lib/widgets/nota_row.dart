@@ -4,6 +4,7 @@ import '../models/product.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import 'product_autocomplete.dart';
+import 'unit_picker.dart';
 
 class NotaRow extends StatefulWidget {
   final NotaItem item;
@@ -32,11 +33,9 @@ class NotaRow extends StatefulWidget {
 class _NotaRowState extends State<NotaRow> {
   late TextEditingController _priceCtrl;
   late TextEditingController _qtyCtrl;
-  late TextEditingController _unitCtrl;
   late TextEditingController _totalCtrl;
   final FocusNode _priceFocus = FocusNode();
   final FocusNode _qtyFocus = FocusNode();
-  final FocusNode _unitFocus = FocusNode();
   final FocusNode _totalFocus = FocusNode();
 
   @override
@@ -44,7 +43,6 @@ class _NotaRowState extends State<NotaRow> {
     super.initState();
     _priceCtrl = TextEditingController(text: widget.item.price > 0 ? widget.item.price.round().toString() : '');
     _qtyCtrl = TextEditingController(text: widget.item.qty > 0 ? formatQty(widget.item.qty) : '');
-    _unitCtrl = TextEditingController(text: widget.item.unit);
     _totalCtrl = TextEditingController(
         text: widget.item.effectiveTotal > 0 ? widget.item.effectiveTotal.round().toString() : '');
   }
@@ -56,9 +54,6 @@ class _NotaRowState extends State<NotaRow> {
     final textTotal = newTotal > 0 ? newTotal.round().toString() : '';
     if (!_totalFocus.hasFocus && _totalCtrl.text != textTotal) {
       _totalCtrl.text = textTotal;
-    }
-    if (!_unitFocus.hasFocus && _unitCtrl.text != widget.item.unit) {
-      _unitCtrl.text = widget.item.unit;
     }
     final textPrice = widget.item.price > 0 ? widget.item.price.round().toString() : '';
     if (!_priceFocus.hasFocus && _priceCtrl.text != textPrice) {
@@ -74,11 +69,9 @@ class _NotaRowState extends State<NotaRow> {
   void dispose() {
     _priceCtrl.dispose();
     _qtyCtrl.dispose();
-    _unitCtrl.dispose();
     _totalCtrl.dispose();
     _priceFocus.dispose();
     _qtyFocus.dispose();
-    _unitFocus.dispose();
     _totalFocus.dispose();
     super.dispose();
   }
@@ -113,7 +106,6 @@ class _NotaRowState extends State<NotaRow> {
                 onSelectProduct: (Product p) {
                   _priceCtrl.text = p.price.round().toString();
                   if (p.lastUnit != null && p.lastUnit!.trim().isNotEmpty) {
-                    _unitCtrl.text = p.lastUnit!;
                   }
                   widget.onUpdate(name: p.name, price: p.price, unit: p.lastUnit, clearOverride: true);
                 },
@@ -152,20 +144,26 @@ class _NotaRowState extends State<NotaRow> {
                           _qtyCtrl.text = '1';
                           widget.onUpdate(qty: 1);
                         }
-                        _unitFocus.requestFocus();
+                        widget.onEnterQty();
                       },
                     ),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     flex: 3,
-                    child: _textField(
-                      controller: _unitCtrl,
-                      focusNode: _unitFocus,
-                      textAlign: TextAlign.left,
-                      hintText: 'pcs',
-                      onChanged: (v) => widget.onUpdate(unit: v),
-                      onSubmitted: (_) => widget.onEnterQty(),
+                    child: Container(
+                      height: 34,
+                      padding: const EdgeInsets.only(left: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.slate200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: UnitSelectField(
+                        value: widget.item.unit,
+                        fontSize: 12,
+                        onChanged: (u) => widget.onUpdate(unit: u),
+                      ),
                     ),
                   ),
                 ],

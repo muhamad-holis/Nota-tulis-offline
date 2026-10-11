@@ -9,6 +9,7 @@ import '../utils/formatters.dart';
 import '../widgets/app_header.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/toast.dart';
+import '../widgets/unit_picker.dart';
 
 /// "Produk Saya": kelola daftar produk, harga, dan satuan.
 class ProdukScreen extends ConsumerStatefulWidget {
@@ -25,13 +26,14 @@ class _ProdukScreenState extends ConsumerState<ProdukScreen> {
     final nameCtrl = TextEditingController(text: product?.name ?? '');
     final priceCtrl = TextEditingController(
         text: (product != null && product.price > 0) ? product.price.round().toString() : '');
-    final unitCtrl = TextEditingController(text: product?.lastUnit ?? '');
+    String unitValue = (product?.lastUnit ?? '').trim();
 
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(product == null ? 'Tambah Produk' : 'Edit Produk'),
-        content: Column(
+        content: StatefulBuilder(
+          builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
@@ -46,11 +48,20 @@ class _ProdukScreenState extends ConsumerState<ProdukScreen> {
               decoration: const InputDecoration(labelText: 'Harga satuan', prefixText: 'Rp '),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: unitCtrl,
-              decoration: const InputDecoration(labelText: 'Satuan (mis. pcs, kg, bks)'),
+            Container(
+              height: 52,
+              padding: const EdgeInsets.only(left: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.slate300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: UnitSelectField(
+                value: unitValue,
+                onChanged: (u) => setLocal(() => unitValue = u),
+              ),
             ),
           ],
+        ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
@@ -61,10 +72,9 @@ class _ProdukScreenState extends ConsumerState<ProdukScreen> {
 
     final name = nameCtrl.text.trim();
     final price = parseRupiahInput(priceCtrl.text).toDouble();
-    final unit = unitCtrl.text.trim();
+    final unit = unitValue.trim();
     nameCtrl.dispose();
     priceCtrl.dispose();
-    unitCtrl.dispose();
 
     if (saved != true) return;
     if (name.isEmpty) {

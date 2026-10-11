@@ -22,7 +22,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'nota_tulis.db');
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE products (
@@ -60,6 +60,7 @@ class DatabaseHelper {
             logo TEXT,
             showLogo INTEGER NOT NULL DEFAULT 1,
             qrisImage TEXT,
+            units TEXT,
             headerText TEXT,
             footerText TEXT,
             paperSize TEXT NOT NULL DEFAULT '58',
@@ -85,6 +86,9 @@ class DatabaseHelper {
         }
         if (oldVersion < 6) {
           await db.execute('ALTER TABLE settings ADD COLUMN qrisImage TEXT');
+        }
+        if (oldVersion < 7) {
+          await db.execute('ALTER TABLE settings ADD COLUMN units TEXT');
         }
       },
     );

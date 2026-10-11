@@ -17,10 +17,11 @@ import '../widgets/app_header.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/live_field.dart';
 import '../widgets/toast.dart';
+import '../widgets/units_editor.dart';
 import 'produk_screen.dart';
 
 /// Halaman Pengaturan terdiri dari menu utama dan beberapa sub-halaman.
-enum SettingsGroup { menu, profil, kustom, printer, backup, whatsNew }
+enum SettingsGroup { menu, profil, kustom, satuan, printer, backup, whatsNew }
 
 class PengaturanScreen extends ConsumerStatefulWidget {
   final SettingsGroup group;
@@ -148,6 +149,8 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
         return 'Profil Bisnis';
       case SettingsGroup.kustom:
         return 'Kustomisasi Nota';
+      case SettingsGroup.satuan:
+        return 'Satuan Barang';
       case SettingsGroup.printer:
         return 'Printer Bluetooth';
       case SettingsGroup.backup:
@@ -236,6 +239,12 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
             title: 'Produk Saya',
             subtitle: 'Kelola daftar produk, harga & satuan',
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProdukScreen())),
+          ),
+          _menuTile(
+            icon: Icons.straighten,
+            title: 'Satuan Barang',
+            subtitle: 'Atur pilihan satuan (pcs, bks, kg, ...)',
+            onTap: () => _openGroup(SettingsGroup.satuan),
           ),
           _menuTile(
             icon: Icons.bluetooth,
@@ -610,6 +619,13 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                   ],
                 ),
               ),
+
+              // --- Satuan Barang ---
+              if (_in(SettingsGroup.satuan))
+                const SettingsSection(
+                  title: 'Daftar Satuan',
+                  child: UnitsEditor(),
+                ),
 
               // --- Riwayat Versi ---
               if (_in(SettingsGroup.whatsNew))
