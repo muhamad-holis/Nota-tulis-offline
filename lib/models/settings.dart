@@ -17,6 +17,7 @@ class Settings {
   final String phone;
   final String? logo; // base64 PNG string, setara dataURL di versi lama
   final bool showLogo;
+  final String? qrisImage; // base64 PNG gambar QRIS pembayaran
   final String headerText;
   final String footerText;
   final String paperSize; // "58" atau "80"
@@ -31,6 +32,7 @@ class Settings {
     required this.phone,
     this.logo,
     required this.showLogo,
+    this.qrisImage,
     required this.headerText,
     required this.footerText,
     required this.paperSize,
@@ -62,6 +64,8 @@ class Settings {
     String? logo,
     bool clearLogo = false,
     bool? showLogo,
+    String? qrisImage,
+    bool clearQrisImage = false,
     String? headerText,
     String? footerText,
     String? paperSize,
@@ -76,6 +80,7 @@ class Settings {
       phone: phone ?? this.phone,
       logo: clearLogo ? null : (logo ?? this.logo),
       showLogo: showLogo ?? this.showLogo,
+      qrisImage: clearQrisImage ? null : (qrisImage ?? this.qrisImage),
       headerText: headerText ?? this.headerText,
       footerText: footerText ?? this.footerText,
       paperSize: paperSize ?? this.paperSize,
@@ -93,6 +98,7 @@ class Settings {
       'phone': phone,
       'logo': logo,
       'showLogo': showLogo ? 1 : 0,
+      'qrisImage': qrisImage,
       'headerText': headerText,
       'footerText': footerText,
       'paperSize': paperSize,
@@ -113,6 +119,7 @@ class Settings {
       phone: map['phone'] as String? ?? '',
       logo: map['logo'] as String?,
       showLogo: (map['showLogo'] as int? ?? 1) == 1,
+      qrisImage: map['qrisImage'] as String?,
       headerText: map['headerText'] as String? ?? '',
       footerText: map['footerText'] as String? ?? '',
       paperSize: map['paperSize'] as String? ?? '58',

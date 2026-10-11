@@ -9,6 +9,7 @@ import '../providers/settings_provider.dart';
 import '../providers/printer_provider.dart';
 import '../providers/history_provider.dart';
 import '../services/backup_service.dart';
+import '../services/csv_export_service.dart';
 import '../services/image_service.dart';
 import '../services/printer_service.dart';
 import '../utils/app_colors.dart';
@@ -16,9 +17,14 @@ import '../widgets/app_header.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/live_field.dart';
 import '../widgets/toast.dart';
+import 'produk_screen.dart';
+
+/// Halaman Pengaturan terdiri dari menu utama dan beberapa sub-halaman.
+enum SettingsGroup { menu, profil, kustom, printer, backup, whatsNew }
 
 class PengaturanScreen extends ConsumerStatefulWidget {
-  const PengaturanScreen({super.key});
+  final SettingsGroup group;
+  const PengaturanScreen({super.key, this.group = SettingsGroup.menu});
 
   @override
   ConsumerState<PengaturanScreen> createState() => _PengaturanScreenState();
@@ -48,6 +54,23 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
       await ref.read(settingsProvider.notifier).patchSettings({'logo': base64Logo});
     } catch (err) {
       showToast('Gagal mengupload logo: $err', ToastType.error);
+    }
+  }
+
+  Future<void> _pickAndSetQris() async {
+    final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
+    if (result == null) return;
+    final bytes = result.files.single.bytes;
+    if (bytes == null) {
+      showToast('Gagal membaca file gambar.', ToastType.error);
+      return;
+    }
+    try {
+      final b64 = resizeImageToBase64(bytes);
+      await ref.read(settingsProvider.notifier).patchSettings({'qrisImage': b64});
+      showToast('Gambar QRIS disimpan', ToastType.success);
+    } catch (err) {
+      showToast('Gagal mengupload gambar QRIS: $err', ToastType.error);
     }
   }
 
@@ -115,20 +138,152 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
     }
   }
 
+  bool _in(SettingsGroup g) => widget.group == g;
+
+  String _titleFor(SettingsGroup g) {
+    switch (g) {
+      case SettingsGroup.menu:
+        return 'Pengaturan';
+      case SettingsGroup.profil:
+        return 'Profil Bisnis';
+      case SettingsGroup.kustom:
+        return 'Kustomisasi Nota';
+      case SettingsGroup.printer:
+        return 'Printer Bluetooth';
+      case SettingsGroup.backup:
+        return 'Backup & Restore';
+      case SettingsGroup.whatsNew:
+        return 'Apa yang Baru';
+    }
+  }
+
+  void _openGroup(SettingsGroup g) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => PengaturanScreen(group: g)));
+  }
+
+  Future<void> _exportCsv() async {
+    try {
+      final count = await exportNotasCsv();
+      showToast('$count nota diekspor ke CSV', ToastType.success);
+    } catch (err) {
+      showToast(err.toString().replaceFirst('Exception: ', ''), ToastType.error);
+    }
+  }
+
+  Widget _menuTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.slate100),
+              ),
+              child: Icon(icon, size: 28, color: AppColors.brand600),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.brand600)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: TextStyle(fontSize: 15, color: AppColors.slate500, height: 1.3)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.slate400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenu() {
+    return Scaffold(
+      backgroundColor: AppColors.slate50,
+      appBar: const AppHeader(title: 'Pengaturan', showSettings: false),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          _menuTile(
+            icon: Icons.storefront_outlined,
+            title: 'Profil Bisnis',
+            subtitle: 'Logo, Nama, Alamat, QRIS',
+            onTap: () => _openGroup(SettingsGroup.profil),
+          ),
+          _menuTile(
+            icon: Icons.style_outlined,
+            title: 'Kustomisasi Nota',
+            subtitle: 'Teks Atas & Bawah, Ukuran Kertas',
+            onTap: () => _openGroup(SettingsGroup.kustom),
+          ),
+          _menuTile(
+            icon: Icons.inventory_2_outlined,
+            title: 'Produk Saya',
+            subtitle: 'Kelola daftar produk, harga & satuan',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProdukScreen())),
+          ),
+          _menuTile(
+            icon: Icons.bluetooth,
+            title: 'Printer Bluetooth',
+            subtitle: 'Pilih printer thermal & tes cetak',
+            onTap: () => _openGroup(SettingsGroup.printer),
+          ),
+          Divider(color: AppColors.slate200, height: 24),
+          _menuTile(
+            icon: Icons.file_download_outlined,
+            title: 'Export Data CSV',
+            subtitle: 'Simpan data nota ke spreadsheet',
+            onTap: _exportCsv,
+          ),
+          _menuTile(
+            icon: Icons.cloud_upload_outlined,
+            title: 'Backup & Restore',
+            subtitle: 'Cadangkan dan pulihkan data',
+            onTap: () => _openGroup(SettingsGroup.backup),
+          ),
+          Divider(color: AppColors.slate200, height: 24),
+          _menuTile(
+            icon: Icons.new_releases_outlined,
+            title: 'Apa yang Baru',
+            subtitle: 'Riwayat fitur & perbaikan tiap versi',
+            onTap: () => _openGroup(SettingsGroup.whatsNew),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.group == SettingsGroup.menu) return _buildMenu();
     final settingsAsync = ref.watch(settingsProvider);
     final printerUi = ref.watch(printerProvider);
 
     return Scaffold(
       backgroundColor: AppColors.slate50,
-      appBar: const AppHeader(title: 'Pengaturan', showSettings: false),
+      appBar: AppHeader(title: _titleFor(widget.group), showSettings: false),
       body: settingsAsync.when(
         data: (settings) {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // --- Informasi Toko ---
+              if (_in(SettingsGroup.profil))
               SettingsSection(
                 title: 'Informasi Toko',
                 child: Column(
@@ -202,7 +357,58 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                 ),
               ),
 
+              // --- Pembayaran QRIS ---
+              if (_in(SettingsGroup.profil))
+              SettingsSection(
+                title: 'Pembayaran QRIS',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Gambar ini akan tampil saat metode pembayaran QRIS dipilih dan kamu menekan Simpan Nota.',
+                      style: TextStyle(fontSize: 12, color: AppColors.slate500),
+                    ),
+                    const SizedBox(height: 12),
+                    if (settings.qrisImage != null)
+                      Center(
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.slate200),
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white,
+                          ),
+                          child: Image.memory(base64Decode(settings.qrisImage!), fit: BoxFit.contain),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickAndSetQris,
+                            icon: Icon(Icons.qr_code_2, color: AppColors.brand600),
+                            label: Text(settings.qrisImage == null ? 'Tambah Gambar QRIS' : 'Ganti Gambar QRIS',
+                                style: TextStyle(color: AppColors.brand600)),
+                          ),
+                        ),
+                        if (settings.qrisImage != null) ...[
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () => ref.read(settingsProvider.notifier).patchSettings({'qrisImage': null}),
+                            style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                            child: const Text('Hapus'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               // --- Tulisan Atas Nota ---
+              if (_in(SettingsGroup.kustom))
               SettingsSection(
                 title: 'Tulisan Atas Nota',
                 child: _labeledField(
@@ -215,6 +421,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               ),
 
               // --- Tulisan Bawah Nota ---
+              if (_in(SettingsGroup.kustom))
               SettingsSection(
                 title: 'Tulisan Bawah Nota',
                 child: _labeledField(
@@ -227,6 +434,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               ),
 
               // --- Ukuran Kertas ---
+              if (_in(SettingsGroup.kustom))
               SettingsSection(
                 title: 'Ukuran Kertas',
                 child: Column(
@@ -289,6 +497,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               ),
 
               // --- Printer Bluetooth ---
+              if (_in(SettingsGroup.printer))
               SettingsSection(
                 title: 'Printer Bluetooth',
                 child: Column(
@@ -347,6 +556,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               ),
 
               // --- Backup Database ---
+              if (_in(SettingsGroup.backup))
               SettingsSection(
                 title: 'Backup Database',
                 child: Column(
@@ -380,6 +590,7 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
               ),
 
               // --- Zona Berbahaya ---
+              if (_in(SettingsGroup.backup))
               SettingsSection(
                 title: 'Zona Berbahaya',
                 child: Column(
@@ -400,7 +611,36 @@ class _PengaturanScreenState extends ConsumerState<PengaturanScreen> {
                 ),
               ),
 
+              // --- Riwayat Versi ---
+              if (_in(SettingsGroup.whatsNew))
+                SettingsSection(
+                  title: 'Tampilan Baru',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final line in const [
+                        'Halaman utama berisi daftar nota dengan tab Semua / Tunai / QRIS.',
+                        'Buat Nota dengan kartu item (Jumlah, Satuan, Harga Satuan) dan Katalog.',
+                        'Metode pembayaran Tunai atau QRIS; QRIS menampilkan gambar QRIS dan jumlah yang harus dibayar.',
+                        'Detail Nota halaman penuh: Share WhatsApp, Simpan sebagai gambar, dan Cetak.',
+                        'Pengaturan baru berupa menu: Profil Bisnis, Kustomisasi Nota, Produk Saya, Printer, Export CSV, Backup.',
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('\u2022 ', style: TextStyle(color: AppColors.slate500)),
+                              Expanded(child: Text(line, style: TextStyle(fontSize: 13, color: AppColors.slate600))),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
               // --- Tentang Aplikasi ---
+              if (_in(SettingsGroup.whatsNew))
               SettingsSection(
                 title: 'Tentang Aplikasi',
                 child: Column(

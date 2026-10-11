@@ -25,6 +25,23 @@ String cropImageToSquareBase64(Uint8List bytes, {int size = 240}) {
   return base64Encode(pngBytes);
 }
 
+/// Perkecil gambar (tanpa crop, rasio tetap) supaya QRIS tetap utuh dan bisa discan.
+/// Hasilnya base64 PNG dengan sisi terpanjang maksimal [maxSide].
+String resizeImageToBase64(Uint8List bytes, {int maxSide = 900}) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    throw Exception('Gagal memuat gambar.');
+  }
+  final longest = decoded.width > decoded.height ? decoded.width : decoded.height;
+  var result = decoded;
+  if (longest > maxSide) {
+    result = decoded.width >= decoded.height
+        ? img.copyResize(decoded, width: maxSide)
+        : img.copyResize(decoded, height: maxSide);
+  }
+  return base64Encode(img.encodePng(result));
+}
+
 /// Konversi base64 PNG logo toko menjadi bitmap monokrom 1-bit, siap dibungkus
 /// jadi perintah ESC/POS "GS v 0" untuk dicetak di printer thermal Bluetooth.
 MonoRaster imageToMonoRaster(String base64Data, int maxWidthPx, {int maxHeightPx = 180}) {

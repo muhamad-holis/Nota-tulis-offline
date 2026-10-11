@@ -10,6 +10,7 @@ class Nota {
   final List<NotaItem> items;
   final double total;
   final double? bayarTunai;
+  final String paymentMethod; // 'tunai' | 'qris'
   final int updatedAt;
 
   Nota({
@@ -21,6 +22,7 @@ class Nota {
     required this.items,
     required this.total,
     this.bayarTunai,
+    this.paymentMethod = 'tunai',
     required this.updatedAt,
   });
 
@@ -30,6 +32,7 @@ class Nota {
     List<NotaItem>? items,
     double? total,
     double? bayarTunai,
+    String? paymentMethod,
     int? updatedAt,
   }) {
     return Nota(
@@ -41,6 +44,7 @@ class Nota {
       items: items ?? this.items,
       total: total ?? this.total,
       bayarTunai: bayarTunai ?? this.bayarTunai,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -55,6 +59,7 @@ class Nota {
       'items': jsonEncode(items.map((e) => e.toMap()).toList()),
       'total': total,
       'bayarTunai': bayarTunai,
+      'paymentMethod': paymentMethod,
       'updatedAt': updatedAt,
     };
   }
@@ -70,6 +75,7 @@ class Nota {
       items: rawItems.map((e) => NotaItem.fromMap(e as Map<String, dynamic>)).toList(),
       total: (map['total'] as num).toDouble(),
       bayarTunai: map['bayarTunai'] == null ? null : (map['bayarTunai'] as num).toDouble(),
+      paymentMethod: (map['paymentMethod'] as String?) ?? 'tunai',
       updatedAt: map['updatedAt'] as int,
     );
   }
@@ -84,6 +90,7 @@ class Nota {
       'items': items.map((e) => e.toMap()).toList(),
       'total': total,
       'bayarTunai': bayarTunai,
+      'paymentMethod': paymentMethod,
       'updatedAt': updatedAt,
     };
   }
@@ -99,6 +106,7 @@ class Nota {
       items: rawItems.map((e) => NotaItem.fromMap(e as Map<String, dynamic>)).toList(),
       total: (map['total'] as num).toDouble(),
       bayarTunai: map['bayarTunai'] == null ? null : (map['bayarTunai'] as num).toDouble(),
+      paymentMethod: (map['paymentMethod'] as String?) ?? 'tunai',
       updatedAt: map['updatedAt'] as int? ?? map['date'] as int,
     );
   }

@@ -15,7 +15,7 @@ Future<void> showCatalogSheet(BuildContext context) {
     useSafeArea: true,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
     ),
     builder: (_) => const CatalogSheet(),
   );
@@ -116,14 +116,14 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
                   hintText: 'Cari produk...',
                   prefixIcon: Icon(Icons.search, color: AppColors.slate400),
                   filled: true,
-                  fillColor: AppColors.slate50,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(28),
                     borderSide: BorderSide(color: AppColors.slate200),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(28),
                     borderSide: BorderSide(color: AppColors.slate200),
                   ),
                 ),
@@ -151,7 +151,7 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
                   return ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemCount: products.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.slate100),
+                    separatorBuilder: (_, __) => const SizedBox(height: 4),
                     itemBuilder: (context, i) {
                       final p = products[i];
                       final qty = qtyInNota[p.name.trim().toLowerCase()] ?? 0;
@@ -195,10 +195,10 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
                               : Icon(Icons.add_circle_outline, color: AppColors.brand600),
                           title: Text(p.name,
                               style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.slate800)),
+                                  fontSize: 17, fontWeight: FontWeight.w500, color: AppColors.slate800)),
                           subtitle: Text(_priceLabel(p),
                               style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.slate500)),
+                                  fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.slate500)),
                         ),
                       );
                     },
@@ -210,13 +210,13 @@ class _CatalogSheetState extends ConsumerState<CatalogSheet> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.brand600,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   child: const Text('Selesai',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),

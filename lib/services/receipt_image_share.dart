@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -68,4 +69,19 @@ Future<void> shareNotaAsImage(BuildContext context, Nota nota, Settings settings
   await file.writeAsBytes(bytes, flush: true);
 
   await Share.shareXFiles([XFile(file.path)], text: 'Nota ${nota.number}');
+}
+
+/// Simpan nota sebagai gambar PNG ke penyimpanan HP (pilih lokasi lewat dialog simpan).
+/// Mengembalikan true kalau file berhasil disimpan, false kalau dibatalkan.
+Future<bool> saveNotaImage(BuildContext context, Nota nota, Settings settings) async {
+  final bytes = await _captureWidgetAsPng(
+    context,
+    ReceiptPreview(nota: nota, settings: settings),
+  );
+  final safeName = nota.number.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+  final path = await FilePicker.saveFile(
+    fileName: 'nota_$safeName.png',
+    bytes: bytes,
+  );
+  return path != null;
 }

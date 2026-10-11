@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 final NumberFormat _idNumberFormat = NumberFormat.decimalPattern('id_ID');
 final DateFormat _idDateFormat = DateFormat('dd/MM/yyyy', 'id_ID');
+final DateFormat _idDateShortFormat = DateFormat('dd MMM yyyy', 'id_ID');
 final DateFormat _idTimeFormat = DateFormat('HH:mm', 'id_ID');
 
 String formatRupiah(num value) {
@@ -36,6 +37,10 @@ String formatQty(num qty) {
 
 String formatDate(int timestampMs) {
   return _idDateFormat.format(DateTime.fromMillisecondsSinceEpoch(timestampMs));
+}
+
+String formatDateShort(int timestampMs) {
+  return _idDateShortFormat.format(DateTime.fromMillisecondsSinceEpoch(timestampMs));
 }
 
 String formatTime(int timestampMs) {

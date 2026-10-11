@@ -26,41 +26,30 @@ class NotaTulisApp extends StatelessWidget {
   }
 }
 
-class _RootShell extends StatefulWidget {
+/// Halaman utama = daftar nota. Laporan, Pengaturan, dan Buat Nota dibuka sebagai halaman penuh.
+class _RootShell extends StatelessWidget {
   const _RootShell();
 
-  @override
-  State<_RootShell> createState() => _RootShellState();
-}
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PengaturanScreen()));
+  }
 
-class _RootShellState extends State<_RootShell> {
-  int _index = 0;
+  void _openLaporan(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => LaporanScreen(onOpenSettings: () => _openSettings(context)),
+    ));
+  }
 
-  void _goToSettings() => setState(() => _index = 3);
+  void _createNota(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotaScreen()));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      NotaScreen(onOpenSettings: _goToSettings),
-      RiwayatScreen(onOpenSettings: _goToSettings),
-      LaporanScreen(onOpenSettings: _goToSettings),
-      const PengaturanScreen(),
-    ];
-
-    return Scaffold(
-      body: IndexedStack(index: _index, children: screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: Colors.white,
-        indicatorColor: AppColors.brand50,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: 'Nota'),
-          NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: 'Riwayat'),
-          NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Laporan'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Pengaturan'),
-        ],
-      ),
+    return RiwayatScreen(
+      onOpenSettings: () => _openSettings(context),
+      onOpenLaporan: () => _openLaporan(context),
+      onCreateNota: () => _createNota(context),
     );
   }
 }

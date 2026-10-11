@@ -13,8 +13,9 @@ NotaItem _emptyRow() => NotaItem(id: generateItemId(), name: '', price: 0, qty: 
 class NotaDraftState {
   final List<NotaItem> items;
   final String customerName;
+  final String paymentMethod; // 'tunai' | 'qris'
 
-  NotaDraftState({required this.items, required this.customerName});
+  NotaDraftState({required this.items, required this.customerName, this.paymentMethod = 'tunai'});
 
   double get total =>
       items.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal);
@@ -22,10 +23,11 @@ class NotaDraftState {
   List<NotaItem> get validItems =>
       items.where((i) => i.name.trim().isNotEmpty && (i.price > 0 || i.qty > 0)).toList();
 
-  NotaDraftState copyWith({List<NotaItem>? items, String? customerName}) {
+  NotaDraftState copyWith({List<NotaItem>? items, String? customerName, String? paymentMethod}) {
     return NotaDraftState(
       items: items ?? this.items,
       customerName: customerName ?? this.customerName,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 }
@@ -38,6 +40,10 @@ class NotaDraftNotifier extends Notifier<NotaDraftState> {
 
   void setCustomerName(String name) {
     state = state.copyWith(customerName: name);
+  }
+
+  void setPaymentMethod(String method) {
+    state = state.copyWith(paymentMethod: method);
   }
 
   void updateItem(String id, {String? name, double? price, double? qty, String? unit, double? totalOverride, bool clearOverride = false}) {
@@ -117,7 +123,8 @@ class NotaDraftNotifier extends Notifier<NotaDraftState> {
       date: now,
       items: validItems,
       total: validItems.fold<double>(0.0, (sum, item) => sum + item.effectiveTotal),
-      bayarTunai: (bayarTunai != null && bayarTunai > 0) ? bayarTunai : null,
+      bayarTunai: (state.paymentMethod == 'tunai' && bayarTunai != null && bayarTunai > 0) ? bayarTunai : null,
+      paymentMethod: state.paymentMethod,
       updatedAt: now,
     );
     final saved = await db.insertNota(nota);

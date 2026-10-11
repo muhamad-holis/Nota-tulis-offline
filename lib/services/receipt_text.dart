@@ -219,7 +219,9 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
   );
   push(divider);
 
-  if (nota.bayarTunai != null && nota.bayarTunai! > 0) {
+  push('Pembayaran: ${nota.paymentMethod == 'qris' ? 'QRIS' : 'Tunai'}');
+
+  if (nota.paymentMethod != 'qris' && nota.bayarTunai != null && nota.bayarTunai! > 0) {
     final bayarStr = formatRupiah(nota.bayarTunai!).replaceFirst('Rp ', '');
     final bayarLabelWidth = 'Bayar Tunai'.length > (charWidth - bayarStr.length)
         ? 'Bayar Tunai'.length
@@ -235,6 +237,8 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
         : charWidth - kembaliStr.length;
     push(_fitLeft(kembaliLabel, kembaliLabelWidth) +
         _fitRight(kembaliStr, charWidth - kembaliLabelWidth));
+    push(divider);
+  } else {
     push(divider);
   }
 

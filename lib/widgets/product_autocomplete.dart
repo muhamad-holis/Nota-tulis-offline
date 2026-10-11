@@ -13,6 +13,8 @@ class ProductAutocomplete extends ConsumerStatefulWidget {
   final VoidCallback onEnter;
   final bool autoFocus;
   final FocusNode? focusNode;
+  final String hintText;
+  final double fontSize;
 
   const ProductAutocomplete({
     super.key,
@@ -22,6 +24,8 @@ class ProductAutocomplete extends ConsumerStatefulWidget {
     required this.onEnter,
     this.autoFocus = false,
     this.focusNode,
+    this.hintText = 'Nama barang',
+    this.fontSize = 13,
   });
 
   @override
@@ -159,12 +163,13 @@ class _ProductAutocompleteState extends ConsumerState<ProductAutocomplete> {
         controller: _controller,
         focusNode: _focusNode,
         autofocus: widget.autoFocus,
-        decoration: const InputDecoration(
-          hintText: 'Nama barang',
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: TextStyle(fontSize: widget.fontSize, color: AppColors.slate300),
           border: InputBorder.none,
           isDense: true,
         ),
-        style: TextStyle(fontSize: 13, color: AppColors.slate800),
+        style: TextStyle(fontSize: widget.fontSize, color: AppColors.slate800),
         textInputAction: TextInputAction.next,
         onChanged: (v) {
           widget.onChanged(v);

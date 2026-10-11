@@ -22,7 +22,7 @@ class DatabaseHelper {
     final path = join(dbPath, 'nota_tulis.db');
     return openDatabase(
       path,
-      version: 4,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE products (
@@ -47,6 +47,7 @@ class DatabaseHelper {
             items TEXT NOT NULL,
             total REAL NOT NULL,
             bayarTunai REAL,
+            paymentMethod TEXT NOT NULL DEFAULT 'tunai',
             updatedAt INTEGER NOT NULL
           )
         ''');
@@ -58,6 +59,7 @@ class DatabaseHelper {
             phone TEXT,
             logo TEXT,
             showLogo INTEGER NOT NULL DEFAULT 1,
+            qrisImage TEXT,
             headerText TEXT,
             footerText TEXT,
             paperSize TEXT NOT NULL DEFAULT '58',
@@ -77,6 +79,12 @@ class DatabaseHelper {
         }
         if (oldVersion < 4) {
           await db.execute('ALTER TABLE settings ADD COLUMN smallFont INTEGER NOT NULL DEFAULT 0');
+        }
+        if (oldVersion < 5) {
+          await db.execute("ALTER TABLE notas ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'tunai'");
+        }
+        if (oldVersion < 6) {
+          await db.execute('ALTER TABLE settings ADD COLUMN qrisImage TEXT');
         }
       },
     );
@@ -233,6 +241,7 @@ class DatabaseHelper {
       all = all
           .where((n) =>
               n.number.toLowerCase().contains(q) ||
+              (n.customerName ?? '').toLowerCase().contains(q) ||
               n.items.any((i) => i.name.toLowerCase().contains(q)))
           .toList();
     }

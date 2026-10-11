@@ -42,8 +42,8 @@ class EditNotaNotifier extends Notifier<EditNotaState> {
   }
 
   /// Muat ulang draft setiap kali nota yang sedang dibuka berganti.
-  void load(Nota nota) {
-    if (state.original?.id == nota.id) return;
+  void load(Nota nota, {bool force = false}) {
+    if (!force && state.original?.id == nota.id) return;
     state = EditNotaState(
       original: nota,
       items: nota.items.isNotEmpty
