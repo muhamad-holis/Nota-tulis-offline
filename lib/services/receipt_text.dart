@@ -7,8 +7,9 @@ class ReceiptLine {
   final String text;
   final String align; // "left" or "center"
   final bool bold;
+  final bool small; // true = cetak pakai font kecil (Font B) khusus baris ini
 
-  ReceiptLine(this.text, {this.align = 'left', this.bold = false});
+  ReceiptLine(this.text, {this.align = 'left', this.bold = false, this.small = false});
 }
 
 /// Lebar baris dalam karakter. Kertas 80mm selalu 42 kolom (font normal printer).
@@ -116,8 +117,8 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
   final lines = <ReceiptLine>[];
   final charWidth = getCharWidth(settings);
   final divider = '-' * charWidth;
-  void push(String text, {String align = 'left', bool bold = false}) {
-    lines.add(ReceiptLine(text, align: align, bold: bold));
+  void push(String text, {String align = 'left', bool bold = false, bool small = false}) {
+    lines.add(ReceiptLine(text, align: align, bold: bold, small: small));
   }
 
   if (settings.storeName.isNotEmpty) {
@@ -146,11 +147,21 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
     push(divider, align: 'center');
   }
 
-  push('Tanggal: ${formatDateTime(nota.date)}');
-  push('No. Nota: ${nota.number}');
-  if (nota.customerName != null && nota.customerName!.isNotEmpty) {
-    push('Pelanggan: ${nota.customerName}');
+  // Baris info nota: label di kiri, nilai rata kanan (sama seperti layar Detail Nota).
+  void pushKv(String label, String value) {
+    if (label.length + 1 + value.length <= charWidth) {
+      push(_fitLeft(label, charWidth - value.length) + value);
+    } else {
+      push('$label: $value');
+    }
   }
+
+  pushKv('No. Nota', nota.number);
+  pushKv('Tanggal', formatDateTime(nota.date));
+  if (nota.customerName != null && nota.customerName!.isNotEmpty) {
+    pushKv('Pembeli', nota.customerName!);
+  }
+  pushKv('Pembayaran', nota.paymentMethod == 'qris' ? 'QRIS' : 'Tunai');
   push(divider);
 
   if (settings.smallFont) {
@@ -177,33 +188,54 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
       );
     }
   } else {
-    // Mode normal: 2 baris per barang, tanpa header tabel.
-    // Baris 1: nama barang (kiri) + total barang (kanan).
-    // Baris 2: "qty satuan x harga satuan", sedikit menjorok, sebagai rincian.
-    for (final item in nota.items) {
-      final totalStr = formatRupiah(item.effectiveTotal);
-      final nameMaxWidth = charWidth - totalStr.length - 1;
+    // Mode normal: tabel seperti layar Detail Nota (No | Item | Qty | Subtotal).
+    // Di bawah nama barang ada rincian "@ Rp harga satuan".
+    // Kolom No hanya di kertas lebar (80mm). Di 58mm (32 kolom) dibuang supaya
+    // kolom Item lebih lega dan nama barang tidak gampang turun baris.
+    final showNo = charWidth >= 42;
+    final digits = nota.items.length.toString().length;
+    final noW = showNo ? (digits < 2 ? 2 : digits) : 0;
+    final noPrefixW = showNo ? noW + 1 : 0;
+    // "Rp" di kolom Subtotal hanya di kertas lebar; di 58mm angkanya saja.
+    final useRp = charWidth >= 42;
+    String money(num v) {
+      final r = formatRupiah(v);
+      return useRp ? r : r.replaceFirst('Rp ', '');
+    }
 
-      if (nameMaxWidth >= _minNameWidth && item.name.length <= nameMaxWidth) {
-        push(_fitLeft(item.name, nameMaxWidth) + ' ' + totalStr);
-      } else {
-        // Nama kepanjangan: bungkus dulu, taruh total di baris terakhir kalau
-        // masih ada ruang, kalau tidak taruh di barisnya sendiri (rata kanan).
-        final wrapped = wrapText(item.name, charWidth);
-        for (var i = 0; i < wrapped.length - 1; i++) {
-          push(wrapped[i]);
-        }
-        final lastLine = wrapped.last;
-        if (charWidth - lastLine.length - 1 >= totalStr.length) {
-          push(_fitLeft(lastLine, charWidth - totalStr.length) + totalStr);
+    var qtyW = 'Qty'.length;
+    var totW = 'Subtotal'.length;
+    for (final item in nota.items) {
+      final q = _qtyUnitStr(item).length;
+      if (q > qtyW) qtyW = q;
+      final t = money(item.effectiveTotal).length;
+      if (t > totW) totW = t;
+    }
+    var nameW = charWidth - noPrefixW - qtyW - totW - 2;
+    if (nameW < 6) nameW = 6;
+    final detailIndent = ' ' * (showNo ? noPrefixW : 2);
+
+    push(
+      '${showNo ? '${_fitLeft('No', noW)} ' : ''}${_fitLeft('Item', nameW)} '
+      '${_fitRight('Qty', qtyW)} ${_fitRight('Subtotal', totW)}',
+    );
+    push(divider);
+
+    for (var i = 0; i < nota.items.length; i++) {
+      final item = nota.items[i];
+      final nameLines = wrapText(item.name, nameW);
+      for (var j = 0; j < nameLines.length; j++) {
+        if (j == 0) {
+          push(
+            '${showNo ? '${_fitLeft('${i + 1}', noW)} ' : ''}${_fitLeft(nameLines[j], nameW)} '
+            '${_fitRight(_qtyUnitStr(item), qtyW)} '
+            '${_fitRight(money(item.effectiveTotal), totW)}',
+          );
         } else {
-          push(lastLine);
-          push(_fitRight(totalStr, charWidth));
+          push('${' ' * noPrefixW}${nameLines[j]}');
         }
       }
-
-      final detailLine = '  ${_qtyUnitStr(item)} x ${formatRupiah(item.price)}';
-      push(detailLine);
+      push('$detailIndent@ ${formatRupiah(item.price)}', small: true);
     }
   }
 
@@ -218,8 +250,6 @@ List<ReceiptLine> buildReceiptLines(Nota nota, Settings settings) {
     bold: true,
   );
   push(divider);
-
-  push('Pembayaran: ${nota.paymentMethod == 'qris' ? 'QRIS' : 'Tunai'}');
 
   if (nota.paymentMethod != 'qris' && nota.bayarTunai != null && nota.bayarTunai! > 0) {
     final bayarStr = formatRupiah(nota.bayarTunai!).replaceFirst('Rp ', '');

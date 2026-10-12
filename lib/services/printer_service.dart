@@ -190,7 +190,14 @@ class PrinterService {
     final receiptLines = buildReceiptLines(nota, settings);
     String? currentAlign;
     bool currentBold = false;
+    bool currentSmall = settings.smallFont;
     for (final rl in receiptLines) {
+      // Baris bertanda small (mis. "@ Rp harga") dicetak pakai Font B (kecil).
+      final wantSmall = settings.smallFont || rl.small;
+      if (wantSmall != currentSmall) {
+        push(wantSmall ? _cmdFontB : _cmdFontA);
+        currentSmall = wantSmall;
+      }
       if (rl.align != currentAlign) {
         push(rl.align == 'center' ? _cmdAlignCenter : _cmdAlignLeft);
         currentAlign = rl.align;
@@ -202,7 +209,7 @@ class PrinterService {
       line(rl.text);
     }
     if (currentBold) push(_cmdBoldOff);
-    if (settings.smallFont) push(_cmdFontA); // kembalikan ke font normal buat print berikutnya
+    if (currentSmall) push(_cmdFontA); // kembalikan ke font normal buat print berikutnya
 
     line();
     line();

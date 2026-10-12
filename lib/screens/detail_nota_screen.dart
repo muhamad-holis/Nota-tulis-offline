@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nota.dart';
 import '../providers/edit_nota_provider.dart';
@@ -29,12 +28,6 @@ class _DetailNotaScreenState extends ConsumerState<DetailNotaScreen> {
   void initState() {
     super.initState();
     _nota = widget.nota;
-  }
-
-  String get _refCode {
-    final raw = _nota.uuid.replaceAll('-', '').toUpperCase();
-    if (raw.length < 8) return _nota.number;
-    return '${raw.substring(0, 4)}-${raw.substring(4, 8)}';
   }
 
   Future<void> _edit() async {
@@ -170,35 +163,6 @@ class _DetailNotaScreenState extends ConsumerState<DetailNotaScreen> {
                       _kv('Tanggal', formatDateTime(_nota.date)),
                       _kv('Pembeli', name.isEmpty ? '-' : name),
                       _kv('Pembayaran', isQris ? 'QRIS' : 'Tunai'),
-                      const SizedBox(height: 10),
-                      InkWell(
-                        onTap: () {
-                          Clipboard.setData(ClipboardData(text: _refCode));
-                          showToast('Kode REF disalin', ToastType.info);
-                        },
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.slate50,
-                            border: Border.all(color: AppColors.slate200),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('REF: $_refCode',
-                                  style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.slate600)),
-                              const SizedBox(width: 10),
-                              Icon(Icons.copy, size: 18, color: AppColors.slate500),
-                            ],
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: 18),
                       Row(
                         children: [

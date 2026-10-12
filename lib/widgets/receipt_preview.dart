@@ -31,7 +31,7 @@ class ReceiptPreview extends StatelessWidget {
                 l.text.isEmpty ? '\u00A0' : l.text,
                 style: TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 11,
+                  fontSize: l.small ? 9 : 11,
                   height: 1.2,
                   fontWeight: l.bold ? FontWeight.bold : FontWeight.normal,
                   color: Colors.black87,
